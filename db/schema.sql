@@ -149,3 +149,73 @@ CREATE TABLE IF NOT EXISTS Training_Prerequisite_Training (
     FOREIGN KEY (prereq_id) REFERENCES Training(training_id),
     FOREIGN KEY (train_id) REFERENCES Training(training_id)
 );
+
+
+CREATE VIEW Astronaut_Age AS
+SELECT 
+    id, 
+    TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) AS age
+FROM 
+    Astronaut;
+
+CREATE VIEW Bidder_Missions AS
+SELECT 
+    M.mission_id,
+    M.employer_id,
+    M.title,
+    M.description,
+    M.objectives,
+    M.launch_date,
+    M.duration,
+    M.num_of_astronauts,
+    M.payload_volume,
+    M.payload_weight
+FROM 
+    Mission M
+JOIN 
+    Mission_Accepted_Bid MAB ON M.mission_id = MAB.mission_id
+JOIN 
+    Bid BD ON MAB.bid_id = BD.bid_id
+JOIN 
+    Bidder B ON BD.bidder_id = B.id;
+
+CREATE VIEW Astronaut_Accepted_Missions AS
+SELECT 
+    A.id AS astronaut_id,
+    M.mission_id,
+    M.employer_id,
+    M.title,
+    M.description,
+    M.objectives,
+    M.launch_date,
+    M.duration,
+    M.num_of_astronauts,
+    M.payload_volume,
+    M.payload_weight
+FROM 
+    Astronaut A
+JOIN 
+    Bid_Has_Astronaut BHA ON A.id = BHA.id
+JOIN 
+    Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
+JOIN 
+    Mission M ON MAB.mission_id = M.mission_id;
+
+
+CREATE VIEW Astronaut_Stats AS
+SELECT 
+    A.id AS astronaut_id,
+    COUNT(MAB.mission_id) AS experience,
+    SUM(M.duration) / A.years_of_experience AS performance
+FROM 
+    Astronaut A
+JOIN 
+    Bid_Has_Astronaut BHA ON A.id = BHA.id
+JOIN 
+    Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
+JOIN 
+    Mission M ON MAB.mission_id = M.mission_id
+WHERE 
+    DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
+GROUP BY 
+    A.id;
