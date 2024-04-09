@@ -120,36 +120,38 @@
     </div>
 
     <!-- Company specific fields -->
-    <div id="companyFields" class="d-none checkbox-group">
+    <div id="companyFields" class="d-none">
       <div class="mb-3">
         <div>
           <label class="form-label">Company Role:</label>
         </div>
-        <div class="form-check">
-          <input
-            class="form-check-input"
-            type="checkbox"
-            id="bidderRole"
-            value="Bidder"
-            name="checkbox-stacked"
-            onchange="validateCompanyRole()"
-            required
-          />
-          <label class="form-check-label" for="bidderRole">Bidder</label>
-        </div>
-        <div class="form-check">
-          <input
-            class="form-check-input"
-            type="checkbox"
-            id="employerRole"
-            value="Employer"
-            name="checkbox-stacked"
-            onchange="validateCompanyRole()"
-            required
-          />
-          <label class="form-check-label" for="employerRole">Employer</label>
-          <div id="roleFeedback" class="invalid-feedback">
-            Please select at least one company role.
+        <div class="checkbox-group">
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="bidderRole"
+              value="Bidder"
+              name="checkbox-stacked"
+              onchange="validateCompanyRole()"
+              required
+            />
+            <label class="form-check-label" for="bidderRole">Bidder</label>
+          </div>
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="employerRole"
+              value="Employer"
+              name="checkbox-stacked"
+              onchange="validateCompanyRole()"
+              required
+            />
+            <label class="form-check-label" for="employerRole">Employer</label>
+            <div id="roleFeedback" class="invalid-feedback">
+              Please select at least one company role.
+            </div>
           </div>
         </div>
 
@@ -250,7 +252,8 @@
       form.addEventListener(
         "submit",
         (event) => {
-          if (!form.checkValidity()) {
+          if (!form.classList.contains('d-none') &&!form.checkValidity()) {
+
             event.preventDefault();
             event.stopPropagation();
           }
@@ -271,6 +274,21 @@
     document.getElementById("companyFields").classList.add("d-none");
     document.getElementById("bidderFields").classList.add("d-none");
     document.getElementById("employerFields").classList.add("d-none");
+
+    // WHEN ASTRANOUT IS SELECTED, WE REMOVE THE REQUIRED ATTRIBUTE FROM THE COMPANY ROLE CHECKBOXES
+    //TODO - IF MORE NEEDS TO BE REQUIRED THIS WILL BE ALTERED
+    checkboxFields = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
+;
+
+    checkboxFields.forEach((field) => {
+      console.log(field);
+      if (accountType === "Astronaut") {
+      field.required = false;
+
+    } else {
+      field.required = true;
+    }
+    });
 
     // Show relevant fields based on account type
     if (accountType === "Astronaut") {
@@ -299,6 +317,7 @@
       .getElementById("employerFields")
       .classList.toggle("d-none", !employerChecked);
   }
+
   $("#registerForm .checkbox-group").on(
     "change",
     'input[type="checkbox"]',

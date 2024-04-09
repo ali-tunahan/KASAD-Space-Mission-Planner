@@ -60,7 +60,7 @@ def register():
             return render_template('login.html', message=message)
 
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT email FROM User WHERE users.email =  %s', (email,))
+        cursor.execute('SELECT email FROM User WHERE user.email =  %s', (email,))
         
 
         account = cursor.fetchone()
@@ -73,7 +73,7 @@ def register():
 
         else:
             random_uuid = uuid.uuid4()
-            cursor.execute('INSERT INTO Users (cid, name) VALUES (% s, % s)', (password, username))
+            cursor.execute('INSERT INTO User (id, email, password) VALUES (%s, % s, % s)', (random_uuid, email, password))
             mysql.connection.commit()
             
             if account_type == 'Astronaut':
@@ -85,8 +85,9 @@ def register():
                 nationality = request.form.get('nationality')
                 rank = request.form.get('rank')
 
-                cursor.execute('INSERT INTO Person VALUES (%s, %s, %s, %s, %s)', (new_id, title, first_name, middle_name, last_name))
-                cursor.execute('INSERT INTO Astronaut VALUES (%s, %s, %s, %s, %s)', (new_id, date_of_birth, nationality, rank, 0))
+                cursor.execute('INSERT INTO Person VALUES (%s, %s, %s, %s, %s)', (random_uuid, title, first_name, middle_name, last_name))
+                #TODO COMPANY ID NEEDS TO BE SPECIFIED - NOW IT'S 1
+                cursor.execute('INSERT INTO Astronaut VALUES (%s,1, %s, %s, %s, %s)', (random_uuid, date_of_birth, nationality, rank, 0))
 
             elif account_type == 'Company':
                 street = request.form.get('street')
@@ -96,15 +97,15 @@ def register():
                 founding_date = request.form.get('founding_date')
                 area_code = request.form.get('area_code')
                 number = request.form.get('number')
-                cursor.execute('INSERT INTO Company VALUES (%s, %s, %s, %s, %s, %s, %s, %s)', (new_id, street, city, state, postal_code, founding_date, 0, area_code, number))
+                cursor.execute('INSERT INTO Company VALUES (%s, %s, %s, %s, %s, %s, %s, %s)', (random_uuid, street, city, state, postal_code, founding_date, 0, area_code, number))
 
             if 'Bidder' in request.form:  # Assuming a checkbox named 'Bidder'
                 specialization = request.form.get('specialization')
-                cursor.execute('INSERT INTO Bidder VALUES (%s, %s)', (new_id, specialization))
+                cursor.execute('INSERT INTO Bidder VALUES (%s, %s)', (random_uuid, specialization))
 
             if 'Employer' in request.form:  # Assuming a checkbox named 'Employer'
                 industry = request.form.get('industry')
-                cursor.execute('INSERT INTO Employer VALUES (%s, %s)', (new_id, industry))
+                cursor.execute('INSERT INTO Employer VALUES (%s, %s)', (random_uuid, industry))
                 message = 'User successfully created!'
                 
             return render_template('login.html', message=message)
