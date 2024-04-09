@@ -1,0 +1,314 @@
+{% extends "base.html" %} {% block content%}
+<div class="container mt-5">
+  <h2>Register</h2>
+  <form
+    id="registerForm"
+    action="/register"
+    method="post"
+    class="row g-3 needs-validation"
+    novalidate
+  >
+    <div class="mb-3">
+      <label for="accountTypeSelect" class="form-label">Account Type</label>
+      <select
+        class="form-select"
+        id="accountTypeSelect"
+        name="account_type"
+        required
+        onchange="showRelevantFields()"
+      >
+        <option selected disabled value="">Select an account type</option>
+        <option value="Astronaut">Astronaut</option>
+        <option value="Company">Company</option>
+      </select>
+      <div class="invalid-feedback">Please select an account type.</div>
+    </div>
+
+    <!-- Common fields -->
+    <div class="mb-3">
+      <label for="emailInput" class="form-label">Email</label>
+      <div class="input-group has-validation">
+        <input
+          type="email"
+          class="form-control"
+          id="emailInput"
+          name="email"
+          required
+        />
+        <div class="invalid-feedback">Please enter a valid email.</div>
+      </div>
+    </div>
+    <div class="mb-3">
+      <label for="passwordInput" class="form-label">Password</label>
+      <input
+        type="password"
+        class="form-control"
+        id="passwordInput"
+        name="password"
+        required
+      />
+      <div class="invalid-feedback">Please enter a password.</div>
+    </div>
+
+    <!-- Astronaut specific fields -->
+    <div id="astronautFields" class="d-none">
+      <div class="mb-3">
+        <label for="titleInput" class="form-label">Title</label>
+        <input type="text" class="form-control" id="titleInput" name="title" />
+      </div>
+      <div class="mb-3">
+        <label for="firstNameInput" class="form-label">First Name</label>
+        <input
+          type="text"
+          class="form-control"
+          id="firstNameInput"
+          name="first_name"
+          required
+        />
+      </div>
+      <div class="mb-3">
+        <label for="middleNameInput" class="form-label"
+          >Middle Name (Optional)</label
+        >
+        <input
+          type="text"
+          class="form-control"
+          id="middleNameInput"
+          name="middle_name"
+        />
+      </div>
+      <div class="mb-3">
+        <label for="lastNameInput" class="form-label">Last Name</label>
+        <input
+          type="text"
+          class="form-control"
+          id="lastNameInput"
+          name="last_name"
+          required
+        />
+      </div>
+      <div class="mb-3">
+        <label for="dobInput" class="form-label">Date of Birth</label>
+        <input
+          type="date"
+          class="form-control"
+          id="dobInput"
+          name="date_of_birth"
+          required
+        />
+      </div>
+      <div class="mb-3">
+        <label for="nationalityInput" class="form-label">Nationality</label>
+        <input
+          type="text"
+          class="form-control"
+          id="nationalityInput"
+          name="nationality"
+          required
+        />
+      </div>
+      <div class="mb-3">
+        <label for="rankInput" class="form-label">Rank</label>
+        <input
+          type="text"
+          class="form-control"
+          id="rankInput"
+          name="rank"
+          required
+        />
+      </div>
+    </div>
+
+    <!-- Company specific fields -->
+    <div id="companyFields" class="d-none checkbox-group">
+      <div class="mb-3">
+        <div>
+          <label class="form-label">Company Role:</label>
+        </div>
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="bidderRole"
+            value="Bidder"
+            name="checkbox-stacked"
+            onchange="validateCompanyRole()"
+            required
+          />
+          <label class="form-check-label" for="bidderRole">Bidder</label>
+        </div>
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="employerRole"
+            value="Employer"
+            name="checkbox-stacked"
+            onchange="validateCompanyRole()"
+            required
+          />
+          <label class="form-check-label" for="employerRole">Employer</label>
+          <div id="roleFeedback" class="invalid-feedback">
+            Please select at least one company role.
+          </div>
+        </div>
+
+        <!-- Bidder specific fields -->
+        <div id="bidderFields" class="d-none">
+          <div class="mb-3">
+            <label for="specializationInput" class="form-label"
+              >Specialization</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="specializationInput"
+              name="specialization"
+            />
+          </div>
+        </div>
+
+        <!-- Employer specific fields -->
+        <div id="employerFields" class="d-none">
+          <div class="mb-3">
+            <label for="industryInput" class="form-label">Industry</label>
+            <input
+              type="text"
+              class="form-control"
+              id="industryInput"
+              name="industry"
+            />
+          </div>
+        </div>
+        <label for="streetInput" class="form-label">Street</label>
+        <input
+          type="text"
+          class="form-control"
+          id="streetInput"
+          name="street"
+        />
+      </div>
+      <div class="mb-3">
+        <label for="cityInput" class="form-label">City</label>
+        <input type="text" class="form-control" id="cityInput" name="city" />
+      </div>
+      <div class="mb-3">
+        <label for="stateInput" class="form-label">State</label>
+        <input type="text" class="form-control" id="stateInput" name="state" />
+      </div>
+      <div class="mb-3">
+        <label for="postalCodeInput" class="form-label">Postal Code</label>
+        <input
+          type="text"
+          class="form-control"
+          id="postalCodeInput"
+          name="postal_code"
+        />
+      </div>
+      <div class="mb-3">
+        <label for="foundingDateInput" class="form-label">Founding Date</label>
+        <input
+          type="date"
+          class="form-control"
+          id="foundingDateInput"
+          name="founding_date"
+        />
+      </div>
+      <div class="mb-3">
+        <label for="areaCodeInput" class="form-label">Area Code</label>
+        <input
+          type="text"
+          class="form-control"
+          id="areaCodeInput"
+          name="area_code"
+        />
+      </div>
+      <div class="mb-3">
+        <label for="numberInput" class="form-label">Phone Number</label>
+        <input
+          type="text"
+          class="form-control"
+          id="numberInput"
+          name="number"
+        />
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Register</button>
+  </form>
+</div>
+
+<script>
+  (() => {
+    "use strict";
+
+    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+    const forms = document.querySelectorAll(".needs-validation");
+
+    // Loop over them and prevent submission
+    Array.from(forms).forEach((form) => {
+      form.addEventListener(
+        "submit",
+        (event) => {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+
+          form.classList.add("was-validated");
+        },
+        false
+      );
+    });
+  })();
+
+  function showRelevantFields() {
+    const accountType = document.getElementById("accountTypeSelect").value;
+    console.log(accountType);
+
+    // Hide all fields initially
+    document.getElementById("astronautFields").classList.add("d-none");
+    document.getElementById("companyFields").classList.add("d-none");
+    document.getElementById("bidderFields").classList.add("d-none");
+    document.getElementById("employerFields").classList.add("d-none");
+
+    // Show relevant fields based on account type
+    if (accountType === "Astronaut") {
+      document.getElementById("astronautFields").classList.remove("d-none");
+    } else if (accountType === "Company") {
+      document.getElementById("companyFields").classList.remove("d-none");
+    }
+  }
+
+  function validateCompanyRole() {
+    const bidderChecked = document.getElementById("bidderRole").checked;
+    const employerChecked = document.getElementById("employerRole").checked;
+    const roleFeedback = document.getElementById("roleFeedback");
+
+    if (bidderChecked || employerChecked) {
+      roleFeedback.style.display = "none";
+    } else {
+      roleFeedback.style.display = "block";
+    }
+
+    // Show or hide Bidder and Employer specific fields
+    document
+      .getElementById("bidderFields")
+      .classList.toggle("d-none", !bidderChecked);
+    document
+      .getElementById("employerFields")
+      .classList.toggle("d-none", !employerChecked);
+  }
+  $("#registerForm .checkbox-group").on(
+    "change",
+    'input[type="checkbox"]',
+    function (e) {
+      var $checkbox = $(this);
+      var $group = $checkbox.parents(".checkbox-group");
+      var checkedItems = $('input[type="checkbox"]:checked').length;
+      $("input[type=checkbox]", $group).attr("required", checkedItems === 0);
+    }
+  );
+</script>
+
+{% endblock %}
