@@ -1,1 +1,2 @@
-db/db-data
+# Exclude Unix socket files
+*.sock
