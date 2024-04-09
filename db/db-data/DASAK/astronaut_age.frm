@@ -1,0 +1,15 @@
+TYPE=VIEW
+query=select `dasak`.`astronaut`.`id` AS `id`,timestampdiff(YEAR,`dasak`.`astronaut`.`date_of_birth`,curdate()) AS `age` from `dasak`.`astronaut`
+md5=c13e0f620ab73fbcae3f7040b33232e3
+updatable=1
+algorithm=0
+definer_user=root
+definer_host=localhost
+suid=2
+with_check_option=0
+timestamp=2024-04-09 11:19:34
+create-version=1
+source=SELECT id, \nTIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) AS age\nFROM Astronaut
+client_cs_name=latin1
+connection_cl_name=latin1_swedish_ci
+view_body_utf8=select `dasak`.`astronaut`.`id` AS `id`,timestampdiff(YEAR,`dasak`.`astronaut`.`date_of_birth`,curdate()) AS `age` from `dasak`.`astronaut`
