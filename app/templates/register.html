@@ -118,9 +118,14 @@
         />
       </div>
     </div>
-
+    
     <!-- Company specific fields -->
+    
     <div id="companyFields" class="d-none">
+      <div class="mb-3">
+        <label for="company_name_input" class="form-label">Company Name</label>
+        <input type="text" class="form-control" id="company_name_input" name="company_name" />
+      </div>
       <div class="mb-3">
         <div>
           <label class="form-label">Company Role:</label>
@@ -132,7 +137,7 @@
               type="checkbox"
               id="bidderRole"
               value="Bidder"
-              name="checkbox-stacked"
+              name="Bidder"
               onchange="validateCompanyRole()"
               required
             />
@@ -144,7 +149,7 @@
               type="checkbox"
               id="employerRole"
               value="Employer"
-              name="checkbox-stacked"
+              name="Employer"
               onchange="validateCompanyRole()"
               required
             />
@@ -244,6 +249,12 @@
 </div>
 
 <script>
+  window.onload = function() {
+    // Reset the form completely
+    document.getElementById('registerForm').reset();
+    // Call function to manage visibility based on account type
+    showRelevantFields();
+  };
   (() => {
     "use strict";
 
@@ -280,17 +291,15 @@
 
     // WHEN ASTRANOUT IS SELECTED, WE REMOVE THE REQUIRED ATTRIBUTE FROM THE COMPANY ROLE CHECKBOXES
     //TODO - IF MORE NEEDS TO BE REQUIRED THIS WILL BE ALTERED
-    checkboxFields = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
-;
+    
+    const astronautInputFields = document.querySelectorAll('#astronautFields input');
 
-    checkboxFields.forEach((field) => {
-      console.log(field);
+    astronautInputFields.forEach((field) => {
       if (accountType === "Astronaut") {
-      field.required = false;
-
-    } else {
-      field.required = true;
-    }
+        field.required = true;  
+      } else {
+        field.required = false;  
+      }
     });
 
     // Show relevant fields based on account type
