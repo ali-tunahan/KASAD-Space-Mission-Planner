@@ -219,3 +219,4 @@ WHERE
     DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
 GROUP BY 
     A.id;
+    
