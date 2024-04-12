@@ -142,9 +142,9 @@ def createMission():
 
 @app.route("/manage_astronauts", methods=["GET", "POST"])
 def manageAstronauts():
-
+    if request.method == "POST":
+        return render_template("manage_astronauts.html")
     return render_template("manage_astronauts.html")
-
 @app.route("/assign_trainings", methods=["GET", "POST"])
 def assignTrainings():
 
