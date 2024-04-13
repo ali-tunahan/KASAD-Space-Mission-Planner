@@ -2,15 +2,14 @@
 <style>
   .pop-edit {
     position: fixed;
-    width: 500px;
-    height: 200px;
+    width: 40vw;
+    height: 74vh;
     padding: 10px;
-    border: 3px solid #147d43;
-    background-color: #d4fce6;
+    background-color: #4f5183;
     top: 50%;
     left: 50%;
-    margin-top: -100px;/* Negative half of height. */
-    margin-left: -250px;/* Negative half of width. */
+    margin-top: -37vh;/* Negative half of height. */
+    margin-left: -20vw;/* Negative half of width. */
     z-index: 10;
   }
 </style>
@@ -45,9 +44,105 @@
                   Button with data-bs-target
                 </button>
               </p>
-              <div class="collapse pop-edit" id="collapseExample">
-                <div class="card card-body">
-                  Some placeholder content for the collapse component. This panel is hidden by default but revealed when the user activates the relevant trigger.
+              <div class="collapse pop-edit border border-5 border-info border-top-0 border-bottom-0 border-opacity-25" id="collapseExample">
+                <div class="h-75">
+                  <div class="card border-secondary border-2 card-body m-4 ">
+                    <p class="lead">
+                      Please change the necessary information that you want to edit.
+                    </p>
+                    <form class="mx-4">
+                      <div class="row mb-2">
+                        <div class="col">
+                          <div class="ps-1">First Name</div>
+                        </div>
+                        <div class="col">
+                          <div class="ps-1">Middle Name</div>
+                        </div>
+                        <div class="col">
+                          <div class="ps-1">Last Name</div>
+                        </div>
+                      </div>
+                      <div class="row mb-4">
+                        <div class="col">
+                          <input name="fname" type="text" class="form-control" value="my-first-name">
+                        </div>
+                        <div class="col">
+                          <input name="mname" type="text" class="form-control" value="my-middle-name">
+                        </div>
+                        <div class="col">
+                          <input name="lname" type="text" class="form-control" value="my-last-name">
+                        </div>
+                      </div>
+                      <div class="text-center">
+                        Birth Date
+                      </div>
+                      <div class="row mb-2">
+                        <div class="col">
+                          <div class="ps-1">Day</div>
+                        </div>
+                        <div class="col">
+                          <div class="ps-1">Month</div>
+                        </div>
+                        <div class="col">
+                          <div class="ps-1">Year</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input name="day" type="text" class="form-control" value="day">
+                        </div>
+                        <div class="col">
+                          <input name="month" type="text" class="form-control" value="month">
+                        </div>
+                        <div class="col">
+                          <input name="year" type="text" class="form-control" value="year">
+                        </div>
+                      </div>
+                      <div class="row mb-1">
+                        <div class="col">
+                          <div class="ps-1">Nationality</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input name="nationality" type="text" class="form-control" value="nationality">
+                        </div>
+                      </div>
+                      <div class="row mb-1">
+                        <div class="col">
+                          <div class="ps-1">Rank</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input name="rank" type="text" class="form-control" value="rank">
+                        </div>
+                      </div>
+                      <div class="row mb-1">
+                        <div class="col">
+                          <div class="ps-1">Title</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input name="title" type="text" class="form-control" value="title">
+                        </div>
+                      </div>
+                      <div class="row mb-1">
+                        <div class="col">
+                          <div class="ps-1">Exp</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input name="exp" type="text" class="form-control" value="exp">
+                        </div>
+                      </div>
+                      <div class="row w-50 mx-auto">
+                        <button type="submit" class="btn btn-secondary">Submit</button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
               </div>
             </div>
@@ -83,9 +178,100 @@
                   Button with data-bs-target
                 </button>
               </p>
-              <div class="collapse pop-edit" id="collapseExample">
-                <div class="card card-body">
-                  Some placeholder content for the collapse component. This panel is hidden by default but revealed when the user activates the relevant trigger.
+              <div class="collapse pop-edit border border-5 border-info border-top-0 border-bottom-0 border-opacity-25" id="collapseExample">
+                <div class="card border-secondary border-2 card-body m-4">
+                  <p class="lead">
+                    Please change the necessary information that you want to edit.
+                  </p>
+                  <form class="mx-4">
+                    <div class="row mb-2">
+                      <div class="col">
+                        <div class="ps-1">First Name</div>
+                      </div>
+                      <div class="col">
+                        <div class="ps-1">Middle Name</div>
+                      </div>
+                      <div class="col">
+                        <div class="ps-1">Last Name</div>
+                      </div>
+                    </div>
+                    <div class="row mb-4">
+                      <div class="col">
+                        <input name="fname" type="text" class="form-control" value="my-first-name">
+                      </div>
+                      <div class="col">
+                        <input name="mname" type="text" class="form-control" value="my-middle-name">
+                      </div>
+                      <div class="col">
+                        <input name="lname" type="text" class="form-control" value="my-last-name">
+                      </div>
+                    </div>
+                    <div class="text-center">
+                      Birth Date
+                    </div>
+                    <div class="row mb-2">
+                      <div class="col">
+                        <div class="ps-1">Day</div>
+                      </div>
+                      <div class="col">
+                        <div class="ps-1">Month</div>
+                      </div>
+                      <div class="col">
+                        <div class="ps-1">Year</div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col">
+                        <input name="day" type="text" class="form-control" value="day">
+                      </div>
+                      <div class="col">
+                        <input name="month" type="text" class="form-control" value="month">
+                      </div>
+                      <div class="col">
+                        <input name="year" type="text" class="form-control" value="year">
+                      </div>
+                    </div>
+                    <div class="row mb-1">
+                      <div class="col">
+                        <div class="ps-1">Nationality</div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col">
+                        <input name="nationality" type="text" class="form-control" value="nationality">
+                      </div>
+                    </div>
+                    <div class="row mb-1">
+                      <div class="col">
+                        <div class="ps-1">Rank</div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col">
+                        <input name="rank" type="text" class="form-control" value="rank">
+                      </div>
+                    </div>
+                    <div class="row mb-1">
+                      <div class="col">
+                        <div class="ps-1">Title</div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col">
+                        <input name="title" type="text" class="form-control" value="title">
+                      </div>
+                    </div>
+                    <div class="row mb-1">
+                      <div class="col">
+                        <div class="ps-1">Exp</div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col">
+                        <input name="exp" type="text" class="form-control" value="exp">
+                      </div>
+                    </div>
+                  </form>
                 </div>
               </div>
             </div>
@@ -121,9 +307,100 @@
                   Button with data-bs-target
                 </button>
               </p>
-              <div class="collapse pop-edit" id="collapseExample">
-                <div class="card card-body">
-                  Some placeholder content for the collapse component. This panel is hidden by default but revealed when the user activates the relevant trigger.
+              <div class="collapse pop-edit border border-5 border-info border-top-0 border-bottom-0 border-opacity-25" id="collapseExample">
+                <div class="card border-secondary border-2 card-body m-4">
+                  <p class="lead">
+                    Please change the necessary information that you want to edit.
+                  </p>
+                  <form class="mx-4">
+                    <div class="row mb-2">
+                      <div class="col">
+                        <div class="ps-1">First Name</div>
+                      </div>
+                      <div class="col">
+                        <div class="ps-1">Middle Name</div>
+                      </div>
+                      <div class="col">
+                        <div class="ps-1">Last Name</div>
+                      </div>
+                    </div>
+                    <div class="row mb-4">
+                      <div class="col">
+                        <input name="fname" type="text" class="form-control" value="my-first-name">
+                      </div>
+                      <div class="col">
+                        <input name="mname" type="text" class="form-control" value="my-middle-name">
+                      </div>
+                      <div class="col">
+                        <input name="lname" type="text" class="form-control" value="my-last-name">
+                      </div>
+                    </div>
+                    <div class="text-center">
+                      Birth Date
+                    </div>
+                    <div class="row mb-2">
+                      <div class="col">
+                        <div class="ps-1">Day</div>
+                      </div>
+                      <div class="col">
+                        <div class="ps-1">Month</div>
+                      </div>
+                      <div class="col">
+                        <div class="ps-1">Year</div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col">
+                        <input name="day" type="text" class="form-control" value="day">
+                      </div>
+                      <div class="col">
+                        <input name="month" type="text" class="form-control" value="month">
+                      </div>
+                      <div class="col">
+                        <input name="year" type="text" class="form-control" value="year">
+                      </div>
+                    </div>
+                    <div class="row mb-1">
+                      <div class="col">
+                        <div class="ps-1">Nationality</div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col">
+                        <input name="nationality" type="text" class="form-control" value="nationality">
+                      </div>
+                    </div>
+                    <div class="row mb-1">
+                      <div class="col">
+                        <div class="ps-1">Rank</div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col">
+                        <input name="rank" type="text" class="form-control" value="rank">
+                      </div>
+                    </div>
+                    <div class="row mb-1">
+                      <div class="col">
+                        <div class="ps-1">Title</div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col">
+                        <input name="title" type="text" class="form-control" value="title">
+                      </div>
+                    </div>
+                    <div class="row mb-1">
+                      <div class="col">
+                        <div class="ps-1">Exp</div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <div class="col">
+                        <input name="exp" type="text" class="form-control" value="exp">
+                      </div>
+                    </div>
+                  </form>
                 </div>
               </div>
             </div>
