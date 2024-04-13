@@ -29,18 +29,19 @@ def login():
         email = request.form['email']
         password = request.form['password']
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT * FROM customer WHERE name = % s AND cid = % s', (email, password, ))
+        cursor.execute('SELECT * FROM User WHERE email = % s AND password = % s', (email, password, ))
         user = cursor.fetchone()
         if user:              
             session['loggedin'] = True
-            session['userid'] = user['cid']
-            session['email'] = user['name']
+            session['userid'] = user['id']
+            session['email'] = user['email']
             message = 'Logged in successfully!'
-            return redirect(url_for('main_page'))
+            return redirect(url_for('main'))
         else:
             message = 'Please enter correct email / password !'
     return render_template('login.html', message = message)
 
+#TODO CHECK IF USER IS INSERTED EVEN THOUGH UNSUCCESFUL CREATION
 @app.route('/register', methods =['GET', 'POST'])
 def register():
     message = ''
@@ -60,7 +61,7 @@ def register():
             return render_template('login.html', message=message)
 
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT email FROM User WHERE user.email =  %s', (email,))
+        cursor.execute('SELECT email FROM User WHERE email =  %s', (email,))
         
 
         account = cursor.fetchone()
@@ -73,7 +74,7 @@ def register():
 
         else:
             random_uuid = uuid.uuid4()
-            cursor.execute('INSERT INTO User (id, email, password) VALUES (%s, % s, % s)', (random_uuid, email, password))
+            cursor.execute('INSERT INTO User (id, email, password) VALUES (%s, % s, % s)', (str(random_uuid), email, password,))
             mysql.connection.commit()
             
             if account_type == 'Astronaut':
@@ -85,30 +86,51 @@ def register():
                 nationality = request.form.get('nationality')
                 rank = request.form.get('rank')
 
-                cursor.execute('INSERT INTO Person VALUES (%s, %s, %s, %s, %s)', (random_uuid, title, first_name, middle_name, last_name))
+                try:
+                    cursor.execute('INSERT INTO Person VALUES (%s, %s, %s, %s, %s)', (str(random_uuid), title, first_name, middle_name, last_name,))
+                    mysql.connection.commit()
+                except Exception as e:
+                    # Handle the exception here
+                    print("Error executing SQL query 1:", e)
                 #TODO COMPANY ID NEEDS TO BE SPECIFIED - NOW IT'S 1
-                cursor.execute('INSERT INTO Astronaut VALUES (%s,1, %s, %s, %s, %s)', (random_uuid, date_of_birth, nationality, rank, 0))
+                cursor.execute('INSERT INTO Astronaut VALUES (%s,1, %s, %s, %s, %s)', (str(random_uuid), date_of_birth, nationality, rank, 0,))
+                mysql.connection.commit()
 
             elif account_type == 'Company':
-                street = request.form.get('street')
+                name = request.form.get('company_name')
+                street = request.form.get('street', '')
                 city = request.form.get('city')
                 state = request.form.get('state')
                 postal_code = request.form.get('postal_code')
                 founding_date = request.form.get('founding_date')
                 area_code = request.form.get('area_code')
-                number = request.form.get('number')
-                cursor.execute('INSERT INTO Company VALUES (%s, %s, %s, %s, %s, %s, %s, %s)', (random_uuid, street, city, state, postal_code, founding_date, 0, area_code, number))
+                balance = 0
+                phone_number = request.form.get('number')
+                try:
+                    cursor.execute('INSERT INTO Company (id, name, street, city, state, postal_code, founding_date, balance, area_code, phone_number) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',(random_uuid, name, street, city, state, postal_code, founding_date, balance, area_code, phone_number,))
+                    mysql.connection.commit()
+                except Exception as e:
+                    print("Error executing SQL query 2:", e)
 
-            if 'Bidder' in request.form:  # Assuming a checkbox named 'Bidder'
-                specialization = request.form.get('specialization')
-                cursor.execute('INSERT INTO Bidder VALUES (%s, %s)', (random_uuid, specialization))
-
-            if 'Employer' in request.form:  # Assuming a checkbox named 'Employer'
-                industry = request.form.get('industry')
-                cursor.execute('INSERT INTO Employer VALUES (%s, %s)', (random_uuid, industry))
-                message = 'User successfully created!'
+                if 'Bidder' in request.form:  
+                    print("BIDDER")
+                    specialization = request.form.get('specialization')
+                    try:
+                        cursor.execute('INSERT INTO Bidder (id, specialization) VALUES (%s, %s)', (str(random_uuid), specialization,))
+                        mysql.connection.commit()
+                    except Exception as e:
+                        print("Error executing SQL query 3:", e)
+                    
+                if 'Employer' in request.form: 
+                    industry = request.form.get('industry')
+                    try:
+                        cursor.execute('INSERT INTO Employer ( id, industry) VALUES (%s, %s)', (str(random_uuid), industry,))
+                        mysql.connection.commit()
+                    except Exception as e:
+                        print("Error executing SQL query 4:", e)
+                    message = 'User successfully created!'
                 
-            return render_template('login.html', message=message)
+            return redirect(url_for('main'))
 
     return render_template('register.html', message = message)
 
@@ -133,6 +155,47 @@ def assignTrainings():
 def bidForMission():
 
     return render_template("bid_for_mission.html")
+
+@app.route("/admin_page", methods=["GET", "POST"])
+def admin():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    report = None
+    report_type = None
+
+    if request.method == 'POST':
+        if 'expensive_mission' in request.form:
+            report_type = 'Most Expensive Missions'
+            cursor.execute("INSERT INTO SystemReport (id, title, content) SELECT ?, ?, CONCAT('Mission ID: ', mission_id, ', Payload Weight: ', payload_weight, ', Title: ', title) FROM Mission ORDER BY payload_weight DESC LIMIT 1;", (str(uuid.uuid4()), report_type))
+            mysql.connection.commit()
+
+        elif 'duplicate_missions' in request.form:
+            report_type = 'Duplicate Missions'
+            cursor.execute("""
+                INSERT INTO SystemReport (id, title, content)
+                SELECT ?, ?, GROUP_CONCAT(CONCAT('Mission ID: ', mission_id))
+                FROM (
+                    SELECT mission_id
+                    FROM Mission
+                    GROUP BY title, description, launch_date
+                    HAVING COUNT(*) > 1
+                ) AS Duplicates;
+            """, (str(uuid.uuid4()), report_type))
+            mysql.connection.commit()
+
+        # Retrieve the latest report
+        cursor.execute("""
+            SELECT content FROM SystemReport
+            WHERE title = ?
+            ORDER BY report_id DESC
+            LIMIT 1;
+        """, (report_type,))
+        report = cursor.fetchone()
+
+    cursor.close()
+
+
+    return render_template('admin_page.html', report=report, report_type=report_type)
+
 
 
 
