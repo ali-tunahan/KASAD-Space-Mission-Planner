@@ -1,0 +1,19 @@
+{% extends "base.html" %} {% block content%}
+    <div class="container mt-4">
+        <h1>Admin Dashboard</h1>
+        <div class="mt-4">
+            <form method="POST">
+                <button type="submit" name="expensive_mission" class="btn btn-primary">Generate Most Expensive Mission Report</button>
+                <button type="submit" name="duplicate_missions" class="btn btn-secondary">Generate Duplicate Missions Report</button>
+            </form>
+        </div>
+
+        {% if report %}
+        <div class="mt-4">
+            <h2>Report: {{ report_type }}</h2>
+            <p>{{ report[0] }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+{% endblock%}

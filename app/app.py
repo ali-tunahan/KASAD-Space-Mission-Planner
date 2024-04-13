@@ -185,6 +185,47 @@ def bidForMission():
 
     return render_template("bid_for_mission.html")
 
+@app.route("/admin_page", methods=["GET", "POST"])
+def admin():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    report = None
+    report_type = None
+
+    if request.method == 'POST':
+        if 'expensive_mission' in request.form:
+            report_type = 'Most Expensive Missions'
+            cursor.execute("INSERT INTO SystemReport (id, title, content) SELECT ?, ?, CONCAT('Mission ID: ', mission_id, ', Payload Weight: ', payload_weight, ', Title: ', title) FROM Mission ORDER BY payload_weight DESC LIMIT 1;", (str(uuid.uuid4()), report_type))
+            mysql.connection.commit()
+
+        elif 'duplicate_missions' in request.form:
+            report_type = 'Duplicate Missions'
+            cursor.execute("""
+                INSERT INTO SystemReport (id, title, content)
+                SELECT ?, ?, GROUP_CONCAT(CONCAT('Mission ID: ', mission_id))
+                FROM (
+                    SELECT mission_id
+                    FROM Mission
+                    GROUP BY title, description, launch_date
+                    HAVING COUNT(*) > 1
+                ) AS Duplicates;
+            """, (str(uuid.uuid4()), report_type))
+            mysql.connection.commit()
+
+        # Retrieve the latest report
+        cursor.execute("""
+            SELECT content FROM SystemReport
+            WHERE title = ?
+            ORDER BY report_id DESC
+            LIMIT 1;
+        """, (report_type,))
+        report = cursor.fetchone()
+
+    cursor.close()
+
+
+    return render_template('admin_page.html', report=report, report_type=report_type)
+
+
 
 
 
