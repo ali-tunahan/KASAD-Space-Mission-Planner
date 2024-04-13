@@ -21,16 +21,6 @@ CREATE TABLE IF NOT EXISTS Admin (
     FOREIGN KEY (id) REFERENCES User(id)
 );
 
-CREATE TABLE IF NOT EXISTS Astronaut (
-    id CHAR(36) PRIMARY KEY,
-    company_id CHAR(36),
-    date_of_birth DATE,
-    nationality VARCHAR(50),
-    rank VARCHAR(50),
-    years_of_experience INT,
-    FOREIGN KEY (id) REFERENCES User(id),
-    FOREIGN KEY (company_id) REFERENCES Company(id)
-);
 
 CREATE TABLE IF NOT EXISTS Company (
     id CHAR(36) PRIMARY KEY,
@@ -46,6 +36,18 @@ CREATE TABLE IF NOT EXISTS Company (
     FOREIGN KEY (id) REFERENCES User(id)
 );
 
+CREATE TABLE IF NOT EXISTS Astronaut (
+    id CHAR(36) PRIMARY KEY,
+    company_id CHAR(36),
+    date_of_birth DATE,
+    nationality VARCHAR(50),
+    rank VARCHAR(50),
+    years_of_experience INT,
+    FOREIGN KEY (id) REFERENCES User(id),
+    FOREIGN KEY (company_id) REFERENCES Company(id)
+);
+
+
 CREATE TABLE IF NOT EXISTS Bidder (
     id CHAR(36) PRIMARY KEY,
     specialization VARCHAR(255),
@@ -59,6 +61,12 @@ CREATE TABLE IF NOT EXISTS Bid (
     bid_date DATE,
     status VARCHAR(50),
     FOREIGN KEY (bidder_id) REFERENCES Bidder(id)
+);
+
+CREATE TABLE IF NOT EXISTS Employer (
+    id CHAR(36) PRIMARY KEY,
+    industry VARCHAR(100),
+    FOREIGN KEY (id) REFERENCES User(id)
 );
 
 CREATE TABLE IF NOT EXISTS Transaction (
@@ -80,11 +88,6 @@ CREATE TABLE IF NOT EXISTS SystemReport (
     FOREIGN KEY (id) REFERENCES Admin(id)
 );
 
-CREATE TABLE IF NOT EXISTS Employer (
-    id CHAR(36) PRIMARY KEY,
-    industry VARCHAR(100),
-    FOREIGN KEY (id) REFERENCES User(id)
-);
 
 CREATE TABLE IF NOT EXISTS Mission (
     mission_id CHAR(36) PRIMARY KEY,
@@ -149,7 +152,6 @@ CREATE TABLE IF NOT EXISTS Training_Prerequisite_Training (
     FOREIGN KEY (prereq_id) REFERENCES Training(training_id),
     FOREIGN KEY (train_id) REFERENCES Training(training_id)
 );
-
 
 CREATE VIEW Astronaut_Age AS
 SELECT 
