@@ -19,7 +19,4 @@ services:
       MYSQL_DATABASE: DASAK # grubun adı baş harflerimiz
       MYSQL_ROOT_PASSWORD: dasak
     volumes:
-      - ./db/db-data:/var/lib/mysql # db data diye bi şey açıyor bu sayede container kapanınca data gitmiyo
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql # cretae command'leri sql çalışınca runlanacak yere mount'luyor
-volumes:
-  db-data:
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql # cretae command'leri sql çalışınca runlanacak yere mount'luyorü
