@@ -137,7 +137,6 @@ def register():
 
 @app.route("/create_mission", methods=["GET", "POST"])
 def createMission():
-
     return render_template("create_mission.html")
 
 @app.route("/manage_astronauts", methods=["GET", "POST"])
