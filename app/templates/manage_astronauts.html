@@ -1,7 +1,681 @@
-{% extends "master.html" %}
-{% block title%}  {% endblock%}
-
-{% block content%}
-
-<h1>MANAGE ASTRONAUTS </h1>
+{% extends "master.html" %} {% block content%}
+<style>
+  .pop-edit {
+    position: fixed;
+    width: 40vw;
+    height: 74vh;
+    padding: 10px;
+    background-color: #33333f;
+    top: 50%;
+    left: 50%;
+    margin-top: -37vh; /* Negative half of height. */
+    margin-left: -20vw; /* Negative half of width. */
+    z-index: 10;
+  }
+</style>
+<div class="container-fluid py-4 px-5">
+  <h1 class="display-6 pb-2">Manage Astronauts</h1>
+  <div class="accordion" id="accordionExample">
+    <div class="accordion-item border border-secondary">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseOne"
+          aria-expanded="false"
+          aria-controls="collapseOne"
+        >
+          <p class="h4">Astronaut Name 1</p>
+        </button>
+      </h2>
+      <div
+        id="collapseOne"
+        class="accordion-collapse collapse collapse-horizontal"
+        data-bs-parent="#accordionExample"
+        style="transition: 0.5s"
+      >
+        <div class="accordion-body" style="width: 1000px">
+          <div class="container-fluid d-flex flex-column px-3">
+            <div style="width: 50%">
+              <ul class="list-group list-group-flush m-2">
+                <li class="list-group-item">
+                  <strong>Age: </strong> 15234512341234
+                </li>
+                <li class="list-group-item">
+                  <strong>Performance: </strong> gqrgrgqrgqrg
+                </li>
+                <li class="list-group-item">
+                  <strong>Years Worked: </strong> 412341234
+                </li>
+              </ul>
+            </div>
+            <div class="pt-4">
+              <p class="d-inline-flex gap-1">
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  data-bs-toggle="modal"
+                  data-bs-target="#staticModal"
+                >
+                  Button with data-bs-target
+                </button>
+              </p>
+              <div
+                class="modal fade border border-5 border-info border-top-0 border-bottom-0 border-opacity-25"
+                id="staticModal"
+                data-bs-backdrop="static"
+                data-bs-keyboard="false"
+                tabindex="-1"
+                aria-labelledby="staticBackdropLabel"
+                aria-hidden="true"
+              >
+                <div class="modal-dialog modal-dialog-scrollable modal-xl">
+                  <div
+                    class="modal-content border-secondary border-2 card-body m-4"
+                  >
+                    <div class="modal-header">
+                      <p class="lead">
+                        Please change the necessary information that you want to
+                        edit.
+                      </p>
+                      <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                      ></button>
+                    </div>
+                    <form class="modal-body m-4">
+                      <div class="row mb-2">
+                        <div class="col">
+                          <div class="ps-1">First Name</div>
+                        </div>
+                        <div class="col">
+                          <div class="ps-1">Middle Name</div>
+                        </div>
+                        <div class="col">
+                          <div class="ps-1">Last Name</div>
+                        </div>
+                      </div>
+                      <div class="row mb-4">
+                        <div class="col">
+                          <input
+                            name="fname"
+                            type="text"
+                            class="form-control"
+                            value="my-first-name"
+                          />
+                        </div>
+                        <div class="col">
+                          <input
+                            name="mname"
+                            type="text"
+                            class="form-control"
+                            value="my-middle-name"
+                          />
+                        </div>
+                        <div class="col">
+                          <input
+                            name="lname"
+                            type="text"
+                            class="form-control"
+                            value="my-last-name"
+                          />
+                        </div>
+                      </div>
+                      <div class="text-center">Birth Date</div>
+                      <div class="row mb-2">
+                        <div class="col">
+                          <div class="ps-1">Day</div>
+                        </div>
+                        <div class="col">
+                          <div class="ps-1">Month</div>
+                        </div>
+                        <div class="col">
+                          <div class="ps-1">Year</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input
+                            name="day"
+                            type="text"
+                            class="form-control"
+                            value="day"
+                          />
+                        </div>
+                        <div class="col">
+                          <input
+                            name="month"
+                            type="text"
+                            class="form-control"
+                            value="month"
+                          />
+                        </div>
+                        <div class="col">
+                          <input
+                            name="year"
+                            type="text"
+                            class="form-control"
+                            value="year"
+                          />
+                        </div>
+                      </div>
+                      <div class="row mb-1">
+                        <div class="col">
+                          <div class="ps-1">Nationality</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input
+                            name="nationality"
+                            type="text"
+                            class="form-control"
+                            value="nationality"
+                          />
+                        </div>
+                      </div>
+                      <div class="row mb-1">
+                        <div class="col">
+                          <div class="ps-1">Rank</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input
+                            name="rank"
+                            type="text"
+                            class="form-control"
+                            value="rank"
+                          />
+                        </div>
+                      </div>
+                      <div class="row mb-1">
+                        <div class="col">
+                          <div class="ps-1">Title</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input
+                            name="title"
+                            type="text"
+                            class="form-control"
+                            value="title"
+                          />
+                        </div>
+                      </div>
+                      <div class="row mb-1">
+                        <div class="col">
+                          <div class="ps-1">Exp</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input
+                            name="exp"
+                            type="text"
+                            class="form-control"
+                            value="exp"
+                          />
+                        </div>
+                      </div>
+                      <div class="row w-50 mx-auto">
+                        <button type="submit" class="btn btn-secondary">
+                          Submit
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-item border border-secondary">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseTwo"
+          aria-expanded="false"
+          aria-controls="collapseTwo"
+        >
+          <p class="h4">Astronaut Name 2</p>
+        </button>
+      </h2>
+      <div
+        id="collapseTwo"
+        class="accordion-collapse collapse collapse-horizontal"
+        data-bs-parent="#accordionExample"
+        style="transition: 0.5s"
+      >
+        <div class="accordion-body" style="width: 1000px">
+          <div class="container-fluid d-flex flex-column px-3">
+            <div style="width: 50%">
+              <ul class="list-group list-group-flush m-2">
+                <li class="list-group-item">
+                  <strong>Age: </strong> 15234512341234
+                </li>
+                <li class="list-group-item">
+                  <strong>Performance: </strong> gqrgrgqrgqrg
+                </li>
+                <li class="list-group-item">
+                  <strong>Years Worked: </strong> 412341234
+                </li>
+              </ul>
+            </div>
+            <div class="pt-4">
+              <p class="d-inline-flex gap-1">
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  data-bs-toggle="modal"
+                  data-bs-target="#staticModal2"
+                >
+                  Button with data-bs-target
+                </button>
+              </p>
+              <div
+                class="modal fade border border-5 border-info border-top-0 border-bottom-0 border-opacity-25"
+                id="staticModal2"
+                data-bs-backdrop="static"
+                data-bs-keyboard="false"
+                tabindex="-1"
+                aria-labelledby="staticBackdropLabel"
+                aria-hidden="true"
+              >
+                <div class="modal-dialog modal-dialog-scrollable modal-xl">
+                  <div
+                    class="modal-content border-secondary border-2 card-body m-4"
+                  >
+                    <div class="modal-header">
+                      <p class="lead">
+                        Please change the necessary information that you want to
+                        edit.
+                      </p>
+                      <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                      ></button>
+                    </div>
+                    <form class="modal-body m-4">
+                      <div class="row mb-2">
+                        <div class="col">
+                          <div class="ps-1">First Name</div>
+                        </div>
+                        <div class="col">
+                          <div class="ps-1">Middle Name</div>
+                        </div>
+                        <div class="col">
+                          <div class="ps-1">Last Name</div>
+                        </div>
+                      </div>
+                      <div class="row mb-4">
+                        <div class="col">
+                          <input
+                            name="fname"
+                            type="text"
+                            class="form-control"
+                            value="my-first-name"
+                          />
+                        </div>
+                        <div class="col">
+                          <input
+                            name="mname"
+                            type="text"
+                            class="form-control"
+                            value="my-middle-name"
+                          />
+                        </div>
+                        <div class="col">
+                          <input
+                            name="lname"
+                            type="text"
+                            class="form-control"
+                            value="my-last-name"
+                          />
+                        </div>
+                      </div>
+                      <div class="text-center">Birth Date</div>
+                      <div class="row mb-2">
+                        <div class="col">
+                          <div class="ps-1">Day</div>
+                        </div>
+                        <div class="col">
+                          <div class="ps-1">Month</div>
+                        </div>
+                        <div class="col">
+                          <div class="ps-1">Year</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input
+                            name="day"
+                            type="text"
+                            class="form-control"
+                            value="day"
+                          />
+                        </div>
+                        <div class="col">
+                          <input
+                            name="month"
+                            type="text"
+                            class="form-control"
+                            value="month"
+                          />
+                        </div>
+                        <div class="col">
+                          <input
+                            name="year"
+                            type="text"
+                            class="form-control"
+                            value="year"
+                          />
+                        </div>
+                      </div>
+                      <div class="row mb-1">
+                        <div class="col">
+                          <div class="ps-1">Nationality</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input
+                            name="nationality"
+                            type="text"
+                            class="form-control"
+                            value="nationality"
+                          />
+                        </div>
+                      </div>
+                      <div class="row mb-1">
+                        <div class="col">
+                          <div class="ps-1">Rank</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input
+                            name="rank"
+                            type="text"
+                            class="form-control"
+                            value="rank"
+                          />
+                        </div>
+                      </div>
+                      <div class="row mb-1">
+                        <div class="col">
+                          <div class="ps-1">Title</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input
+                            name="title"
+                            type="text"
+                            class="form-control"
+                            value="title"
+                          />
+                        </div>
+                      </div>
+                      <div class="row mb-1">
+                        <div class="col">
+                          <div class="ps-1">Exp</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input
+                            name="exp"
+                            type="text"
+                            class="form-control"
+                            value="exp"
+                          />
+                        </div>
+                      </div>
+                      <div class="row w-50 mx-auto">
+                        <button type="submit" class="btn btn-secondary">
+                          Submit
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-item border border-secondary">
+      <h2 class="accordion-header">
+        <button
+          class="accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#collapseThree"
+          aria-expanded="false"
+          aria-controls="collapseThree"
+        >
+          <p class="h4">Astronaut Name 3</p>
+        </button>
+      </h2>
+      <div
+        id="collapseThree"
+        class="accordion-collapse collapse collapse-horizontal"
+        data-bs-parent="#accordionExample"
+        style="transition: 0.5s"
+      >
+        <div class="accordion-body" style="width: 1000px">
+          <div class="container-fluid d-flex flex-column px-3">
+            <div style="width: 50%">
+              <ul class="list-group list-group-flush m-2">
+                <li class="list-group-item">
+                  <strong>Age: </strong> 15234512341234
+                </li>
+                <li class="list-group-item">
+                  <strong>Performance: </strong> gqrgrgqrgqrg
+                </li>
+                <li class="list-group-item">
+                  <strong>Years Worked: </strong> 412341234
+                </li>
+              </ul>
+            </div>
+            <div class="pt-4">
+              <p class="d-inline-flex gap-1">
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  data-bs-toggle="modal"
+                  data-bs-target="#staticModal3"
+                >
+                  Button with data-bs-target
+                </button>
+              </p>
+              <div
+                class="modal fade border border-5 border-info border-top-0 border-bottom-0 border-opacity-25"
+                id="staticModal3"
+                data-bs-backdrop="static"
+                data-bs-keyboard="false"
+                tabindex="-1"
+                aria-labelledby="staticBackdropLabel"
+                aria-hidden="true"
+              >
+                <div class="modal-dialog modal-dialog-scrollable modal-xl">
+                  <div
+                    class="modal-content border-secondary border-2 card-body m-4"
+                  >
+                    <div class="modal-header">
+                      <p class="lead">
+                        Please change the necessary information that you want to
+                        edit.
+                      </p>
+                      <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                      ></button>
+                    </div>
+                    <form class="modal-body m-4">
+                      <div class="row mb-2">
+                        <div class="col">
+                          <div class="ps-1">First Name</div>
+                        </div>
+                        <div class="col">
+                          <div class="ps-1">Middle Name</div>
+                        </div>
+                        <div class="col">
+                          <div class="ps-1">Last Name</div>
+                        </div>
+                      </div>
+                      <div class="row mb-4">
+                        <div class="col">
+                          <input
+                            name="fname"
+                            type="text"
+                            class="form-control"
+                            value="my-first-name"
+                          />
+                        </div>
+                        <div class="col">
+                          <input
+                            name="mname"
+                            type="text"
+                            class="form-control"
+                            value="my-middle-name"
+                          />
+                        </div>
+                        <div class="col">
+                          <input
+                            name="lname"
+                            type="text"
+                            class="form-control"
+                            value="my-last-name"
+                          />
+                        </div>
+                      </div>
+                      <div class="text-center">Birth Date</div>
+                      <div class="row mb-2">
+                        <div class="col">
+                          <div class="ps-1">Day</div>
+                        </div>
+                        <div class="col">
+                          <div class="ps-1">Month</div>
+                        </div>
+                        <div class="col">
+                          <div class="ps-1">Year</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input
+                            name="day"
+                            type="text"
+                            class="form-control"
+                            value="day"
+                          />
+                        </div>
+                        <div class="col">
+                          <input
+                            name="month"
+                            type="text"
+                            class="form-control"
+                            value="month"
+                          />
+                        </div>
+                        <div class="col">
+                          <input
+                            name="year"
+                            type="text"
+                            class="form-control"
+                            value="year"
+                          />
+                        </div>
+                      </div>
+                      <div class="row mb-1">
+                        <div class="col">
+                          <div class="ps-1">Nationality</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input
+                            name="nationality"
+                            type="text"
+                            class="form-control"
+                            value="nationality"
+                          />
+                        </div>
+                      </div>
+                      <div class="row mb-1">
+                        <div class="col">
+                          <div class="ps-1">Rank</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input
+                            name="rank"
+                            type="text"
+                            class="form-control"
+                            value="rank"
+                          />
+                        </div>
+                      </div>
+                      <div class="row mb-1">
+                        <div class="col">
+                          <div class="ps-1">Title</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input
+                            name="title"
+                            type="text"
+                            class="form-control"
+                            value="title"
+                          />
+                        </div>
+                      </div>
+                      <div class="row mb-1">
+                        <div class="col">
+                          <div class="ps-1">Exp</div>
+                        </div>
+                      </div>
+                      <div class="row mb-3">
+                        <div class="col">
+                          <input
+                            name="exp"
+                            type="text"
+                            class="form-control"
+                            value="exp"
+                          />
+                        </div>
+                      </div>
+                      <div class="row w-50 mx-auto">
+                        <button type="submit" class="btn btn-secondary">
+                          Submit
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

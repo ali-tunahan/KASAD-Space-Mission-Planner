@@ -1,34 +1,54 @@
 {% extends "base.html" %} {% block content%}
 
 <div class="container-fluid">
-    <div class="row vh-100">
-        <div class="col-lg-6 d-flex justify-content-center align-items-center bg-dark-custom">
-           
-            <img src="{{ url_for('static', filename='CosmoCrewLogo.svg') }}" alt="CosmoCrew Logo" class="img-fluid" style="max-width: 80%;">
-        </div>
-        <div class="col-lg-6 d-flex align-items-center">
-            <div class="card bg-dark text-light mx-auto" style="max-width: 400px;">
-                <div class="card-body">
-                    <h2 class="card-title text-center mb-4">Login</h2>
-                    <form action="/login" method="POST">
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" name="email" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Login</button>
-                    </form>
-                    <div class="text-center mt-3">
-                        <p>Don't have an account? <a href="/register" class="text-primary">Register</a></p>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <div class="row vh-100">
+    <div
+      class="col-lg-6 d-flex justify-content-center align-items-center bg-dark-custom"
+    >
+      <img
+        src="{{ url_for('static', filename='CosmoCrewLogo.svg') }}"
+        alt="CosmoCrew Logo"
+        class="img-fluid"
+        style="max-width: 80%"
+      />
     </div>
+    <div class="col-lg-6 d-flex align-items-center">
+      <div class="card bg-dark text-light mx-auto" style="max-width: 400px">
+        <div class="card-body">
+          <h2 class="card-title text-center mb-4">Login</h2>
+          <form action="/login" method="POST">
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input
+                type="email"
+                class="form-control"
+                id="email"
+                name="email"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <input
+                type="password"
+                class="form-control"
+                id="password"
+                name="password"
+                required
+              />
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+          </form>
+          <div class="text-center mt-3">
+            <p>
+              Don't have an account?
+              <a href="/register" class="text-primary">Register</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-
 
 {% endblock %}
