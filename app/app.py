@@ -175,8 +175,12 @@ def manageAstronauts():
     return render_template("manage_astronauts.html")
 @app.route("/assign_trainings", methods=["GET", "POST"])
 def assignTrainings():
-
-    return render_template("assign_trainings.html")
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute('SELECT name, training_id, code, description, duration, IFNULL(GROUP_CONCAT(prereq_id), Null) AS prereq_ids FROM Training LEFT JOIN Training_Prerequisite_Training ON training_id = train_id GROUP BY training_id')
+    trainings = cursor.fetchall()   
+    cursor.execute('SELECT * FROM Astronaut')
+    astronauts = cursor.fetchall()
+    return render_template("assign_trainings.html", trainings = trainings,astronauts=astronauts)
 
 
 @app.route("/bid_for_mission", methods=["GET", "POST"])

@@ -224,6 +224,7 @@ WHERE
 GROUP BY 
     A.id;
 
+
 SET GLOBAL event_scheduler = ON;
 CREATE EVENT IF NOT EXISTS UpdateBidStatusEvent
 ON SCHEDULE EVERY 1 DAY
