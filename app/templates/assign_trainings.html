@@ -1,117 +1,87 @@
-{% extends "master.html" %} {% block title%} {% endblock%} {% block content%}
+{% extends "master.html" %}
+{% block title%} {% endblock%}
+
+{% block content%}
 
 <h1>ASSIGN TRAINING</h1>
+<style>
+    /* Custom CSS to change text color to black */
+    .collapse .card-body,
+    .modal-body{
+        color: black;
+    }
+</style>
+{%for training in trainings%}
 <div class="card w-51 mb-3">
-  <div class="card-body d-flex justify-content-between align-items-center">
-    <div>
-      <h5 class="card-title">Card title</h5>
-      <p class="card-text">
-        With supporting text below as a natural lead-in to additional content.
-      </p>
+    <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="card-title"> {{training.name}}</h5>
+            <p class="card-text">{{training.description}}</p>
+        </div>
+        <div>
+            <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample{{training.training_id}}"
+                aria-expanded="false" aria-controls="collapseExample{{training.training_id}}">
+                Details
+            </button>
+            <!-- Button trigger modal -->
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal{{training.training_id}}">
+                Assign
+            </button>
+        </div>
+
     </div>
-    <div>
-      <button
-        class="btn btn-primary"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#collapseExample"
-        aria-expanded="false"
-        aria-controls="collapseExample"
-      >
-        Details
-      </button>
-      <!-- Button trigger modal -->
-      <button
-        type="button"
-        class="btn btn-primary"
-        data-bs-toggle="modal"
-        data-bs-target="#exampleModal"
-      >
-        Assign
-      </button>
-    </div>
-  </div>
 </div>
-<div class="collapse" id="collapseExample">
-  <div class="card card-body">
-    Some placeholder content for the collapse component. This panel is hidden by
-    default but revealed when the user activates the relevant trigger.
-  </div>
+<div class="collapse" id="collapseExample{{training.training_id}}">
+    <div class="card card-body">
+        Code: {{training.code}}
+        Duration: {{training.duration}}
+        Prereq: {{training.prereq_ids}}
+    </div>
 </div>
 <!-- Modal -->
-<div
-  class="modal fade"
-  id="exampleModal"
-  tabindex="-1"
-  aria-labelledby="exampleModalLabel"
-  aria-hidden="true"
->
-  <div class="modal-dialog modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="modal"
-          aria-label="Close"
-        ></button>
-      </div>
-      <div class="modal-body">
-        <div class="card w-51 mb-3">
-          <div
-            class="btn-group"
-            role="group"
-            aria-label="Basic checkbox toggle button group"
-          >
-            <div
-              class="card-body d-flex justify-content-between align-items-center"
-            >
-              <div>
-                <h5 class="card-title">Card title</h5>
-                <p class="card-text">
-                  With supporting text below as a natural lead-in to additional
-                  content.
-                </p>
-              </div>
-              <button
-                class="btn btn-primary"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#collapseExample2"
-                aria-expanded="false"
-                aria-controls="collapseExample"
-              >
-                Details
-              </button>
-              <input
-                type="checkbox"
-                class="btn-check"
-                id="btncheck1"
-                autocomplete="off"
-              />
-              <label class="btn btn-outline-primary" for="btncheck1"
-                >Assign</label
-              >
+<div class="modal fade" id="exampleModal{{training.training_id}}" tabindex="-1" aria-labelledby="exampleModalLabel{{training.training_id}}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel{{training.training_id}}">Astronauts</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-          </div>
-        </div>
-        <div class="collapse" id="collapseExample2">
-          <div class="card card-body">
-            Some placeholder content for the collapse component. This panel is
-            hidden by default but revealed when the user activates the relevant
-            trigger.
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          Close
-        </button>
-        <button type="button" class="btn btn-primary">Save changes</button>
-      </div>
-    </div>
-  </div>
-</div>
+            <div class="modal-body">
+                {%for astronaut in astronauts%}
+                <div class="card w-51 mb-3">
+                    <div class="btn-group" role="group" aria-label="Basic checkbox toggle button group">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title"><astronaut class="id"></t>{{astronaut.id}} </h5>
+                                <p class="card-text">{{astronaut.company_id}}
+                                </p>
+                            </div>
+                            <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapseExample2" aria-expanded="false"
+                                aria-controls="collapseExample">
+                                Details
+                            </button>
+                            <input type="checkbox" class="btn-check" id="btncheck1" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="btncheck1">Assign</label>
+                        </div>
+                    </div>
 
+                </div>
+                <div class="collapse" id="collapseExample2">
+                    <div class="card card-body">
+                        Some placeholder content for the collapse component. This panel is hidden by default but
+                        revealed when the user
+                        activates the relevant trigger.
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% endblock %}
