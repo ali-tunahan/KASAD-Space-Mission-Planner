@@ -1,6 +1,6 @@
 import re
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_mysqldb import MySQL
 import MySQLdb.cursors
 import uuid
@@ -175,14 +175,46 @@ def manageAstronauts():
     return render_template("manage_astronauts.html")
 @app.route("/assign_trainings", methods=["GET", "POST"])
 def assignTrainings():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute('SELECT name, training_id, code, description, duration, IFNULL(GROUP_CONCAT(prereq_id), Null) AS prereq_ids FROM Training LEFT JOIN Training_Prerequisite_Training ON training_id = train_id GROUP BY training_id')
-    trainings = cursor.fetchall()   
-    cursor.execute('SELECT * FROM Astronaut')
-    astronauts = cursor.fetchall()
-    return render_template("assign_trainings.html", trainings = trainings,astronauts=astronauts)
+    if request.method == 'GET':
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute('SELECT T.name, T.training_id, T.code, T.description, T.duration, IFNULL(GROUP_CONCAT(P.code), Null) AS prereq_ids FROM Training T LEFT JOIN Training_Prerequisite_Training ON training_id = train_id LEFT JOIN Training P ON P.training_id = prereq_id GROUP BY T.training_id')
+        trainings = cursor.fetchall()   
+        cursor.execute('SELECT * FROM Astronaut')
+        astronauts = cursor.fetchall()
+        return render_template("assign_trainings.html", trainings=trainings, astronauts=astronauts)
+    else:
+        training_id = request.form['training_id']
+        selected_ids = request.form.getlist('selected_ids')
 
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        try:
+            astronauts_cant_take = []
+            for astronaut_id in selected_ids:
+                # Check if the astronaut has completed all prerequisite trainings
+                cursor.execute('SELECT prereq_id FROM Training_Prerequisite_Training WHERE train_id = %s', (training_id,))
+                prerequisite_trainings = cursor.fetchall()
 
+                cursor.execute('SELECT training_id FROM Astronaut_Completes_Training WHERE astronaut_id = %s AND status = 1', (astronaut_id,))
+                completed_trainings = [row['training_id'] for row in cursor.fetchall()]
+                cursor.execute('SELECT training_id FROM Astronaut_Completes_Training WHERE astronaut_id = %s', (astronaut_id,))
+                completed_or_not_completed_trainings = [row['training_id'] for row in cursor.fetchall()]
+
+                if all(prereq['prereq_id'] in completed_trainings for prereq in prerequisite_trainings) and training_id not in completed_or_not_completed_trainings:
+                    cursor.execute('INSERT INTO Astronaut_Completes_Training (astronaut_id, training_id, status) VALUES (%s, %s, 0)', (astronaut_id, training_id))
+                    mysql.connection.commit()
+                else:
+                    astronauts_cant_take.append(astronaut_id)
+            
+            if not astronauts_cant_take:
+                flash(f'All selected astronauts have been assigned to training {training_id}', 'info')
+            else:
+                flash(f'Astronauts {", ".join(astronauts_cant_take)} can not be assigned', 'alert')
+
+        except Exception as e:
+            print("Error executing SQL query:", e)
+            flash('An error occurred while processing the request', 'alert')
+
+        return redirect(url_for('assignTrainings'))  # Redirect to the same page after processing
 @app.route("/bid_for_mission", methods=["GET", "POST"])
 def bidForMission():
 
