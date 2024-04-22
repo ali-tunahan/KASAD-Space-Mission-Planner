@@ -58,6 +58,7 @@
                   type="button"
                   data-bs-toggle="modal"
                   data-bs-target="#staticModal{{ loop.index }}"
+                  onclick="fetchAstronautData('{{ astronaut.astronaut_id }}', '{{ loop.index }}')"
                 >
                   Button with data-bs-target
                 </button>
@@ -103,6 +104,7 @@
                         <div class="col">
                           <input
                             name="fname"
+                            id="fname"
                             type="text"
                             class="form-control"
                             value="my-first-name"
@@ -111,6 +113,7 @@
                         <div class="col">
                           <input
                             name="mname"
+                            id="mname"
                             type="text"
                             class="form-control"
                             value="my-middle-name"
@@ -119,6 +122,7 @@
                         <div class="col">
                           <input
                             name="lname"
+                            id="lname"
                             type="text"
                             class="form-control"
                             value="my-last-name"
@@ -172,6 +176,7 @@
                         <div class="col">
                           <input
                             name="nationality"
+                            id="nationality"
                             type="text"
                             class="form-control"
                             value="nationality"
@@ -187,6 +192,7 @@
                         <div class="col">
                           <input
                             name="rank"
+                            id="rank"
                             type="text"
                             class="form-control"
                             value="rank"
@@ -202,6 +208,7 @@
                         <div class="col">
                           <input
                             name="title"
+                            id="title"
                             type="text"
                             class="form-control"
                             value="title"
@@ -217,6 +224,7 @@
                         <div class="col">
                           <input
                             name="exp"
+                            id="exp"
                             type="text"
                             class="form-control"
                             value="exp"
@@ -240,4 +248,40 @@
     {% endfor %}
   </div>
 </div>
+
+<script>
+  function fetchAstronautData(astronautId, loopIndex) {
+    console.log(astronautId);
+    console.log(loopIndex)
+    //console.log(loopIndex);
+    fetch('/manage_astronauts?astronaut_id=' + encodeURIComponent(astronautId), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        alert(data.error);
+      } else {
+        console.log(data); // Output data to console for debugging
+        // Get the modal specific to this astronaut
+        var modal = document.getElementById('staticModal' + loopIndex);
+        // Use the modal context to find each input
+        document.getElementById('fname').value = data.first_name;
+        modal.querySelector('[name="fname"]').value = data.first_name || '';
+        modal.querySelector('[name="mname"]').value = data.middle_name || '';
+        modal.querySelector('[name="lname"]').value = data.last_name || '';
+        modal.querySelector('[name="nationality"]').value = data.nationality || '';
+        modal.querySelector('[name="rank"]').value = data.rank || '';
+        modal.querySelector('[name="title"]').value = data.title || '';
+        modal.querySelector('[name="exp"]').value = data.years_of_experience || '';
+        // Continue setting other fields as needed
+      }
+    })
+    //.catch(error => console.error('Error:', error));
+  }
+  </script>
+
 {% endblock %}

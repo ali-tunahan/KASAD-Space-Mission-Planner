@@ -1,6 +1,6 @@
 import re
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_mysqldb import MySQL
 import MySQLdb.cursors
 import uuid
@@ -143,35 +143,60 @@ def createMission():
 def manageAstronauts():
     if 'loggedin' in session:
         if request.method == "GET":
-            companyId = session['userid']
-            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-            #Filters are not included in the query rn. Needs to be implemented
-            cursor.execute('''
-                SELECT 
-                A.id AS astronaut_id,
-                P.title,
-                P.first_name,
-                P.middle_name,
-                P.last_name,
-                (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
-                JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
-                JOIN Mission M ON MAB.mission_id = M.mission_id
-                WHERE BHA.id = A.id
-                AND A.company_id = %s
-                AND (M.launch_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) OR DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE())
-                ) AS filtered_missions_count,
-                (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
-                JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
-                JOIN Mission M ON MAB.mission_id = M.mission_id
-                WHERE BHA.id = A.id AND A.company_id = %s
-                AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
-                ) AS total_missions_count
-                FROM Astronaut A NATURAL JOIN Person P
-                WHERE
-                A.company_id = %s ''', (companyId, companyId,companyId))
-            astronauts = cursor.fetchall()
-            return render_template("manage_astronauts.html", astronauts = astronauts)
-    return render_template("manage_astronauts.html", astronauts = astronauts)
+            astronaut_id = request.args.get('astronaut_id')
+            if not astronaut_id:
+                companyId = session['userid']
+                cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+                #Filters are not included in the query rn. Needs to be implemented
+                cursor.execute('''
+                    SELECT 
+                    A.id AS astronaut_id,
+                    P.title,
+                    P.first_name,
+                    P.middle_name,
+                    P.last_name,
+                    (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
+                    JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
+                    JOIN Mission M ON MAB.mission_id = M.mission_id
+                    WHERE BHA.id = A.id
+                    AND A.company_id = %s
+                    AND (M.launch_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) OR DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE())
+                    ) AS filtered_missions_count,
+                    (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
+                    JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
+                    JOIN Mission M ON MAB.mission_id = M.mission_id
+                    WHERE BHA.id = A.id AND A.company_id = %s
+                    AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
+                    ) AS total_missions_count
+                    FROM Astronaut A NATURAL JOIN Person P
+                    WHERE
+                    A.company_id = %s ''', (companyId, companyId,companyId))
+                astronauts = cursor.fetchall()
+                return render_template("manage_astronauts.html", astronauts = astronauts)
+            else:
+                companyId = session['userid']
+                cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+                cursor.execute('''
+                    SELECT 
+                    A.id AS astronaut_id,
+                    P.title,
+                    P.first_name,
+                    P.middle_name,
+                    P.last_name,
+                    A.date_of_birth,
+                    A.nationality,
+                    A.rank,
+                    A.years_of_experience
+                    FROM Astronaut A NATURAL JOIN Person P
+                    WHERE A.id = %s AND A.company_id = %s
+                ''', (astronaut_id, companyId))
+                astronaut_data = cursor.fetchone()
+                if astronaut_data:
+                    return jsonify(astronaut_data)
+                else:
+                    return jsonify({'error': 'Astronaut not found'}), 404
+        elif request.method == "POST":
+            return
 @app.route("/assign_trainings", methods=["GET", "POST"])
 def assignTrainings():
 
