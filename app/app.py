@@ -44,6 +44,10 @@ def login():
 #TODO CHECK IF USER IS INSERTED EVEN THOUGH UNSUCCESFUL CREATION
 @app.route('/register', methods =['GET', 'POST'])
 def register():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT id, name FROM Company")
+    companies = cursor.fetchall()
+    print(companies)
     message = ''
     if request.method == 'POST' :
         account_type = request.form.get('account_type')  
@@ -81,6 +85,7 @@ def register():
                 title = request.form.get('title')
                 first_name = request.form.get('first_name')
                 middle_name = request.form.get('middle_name', '')  # Optional field
+                company_id = request.form.get('company_id')
                 last_name = request.form.get('last_name')
                 date_of_birth = request.form.get('date_of_birth')
                 nationality = request.form.get('nationality')
@@ -93,7 +98,7 @@ def register():
                     # Handle the exception here
                     print("Error executing SQL query 1:", e)
                 #TODO COMPANY ID NEEDS TO BE SPECIFIED - NOW IT'S 1
-                cursor.execute('INSERT INTO Astronaut VALUES (%s,1, %s, %s, %s, %s)', (str(random_uuid), date_of_birth, nationality, rank, 0,))
+                cursor.execute('INSERT INTO Astronaut VALUES (%s, %s, %s, %s, %s, %s)', (str(random_uuid),company_id, date_of_birth, nationality, rank, 0,))
                 mysql.connection.commit()
 
             elif account_type == 'Company':
@@ -132,7 +137,7 @@ def register():
                 
             return redirect(url_for('main'))
 
-    return render_template('register.html', message = message)
+    return render_template('register.html', message = message, companies =  companies)
 
 
 @app.route("/create_mission", methods=["GET", "POST"])
