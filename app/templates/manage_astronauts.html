@@ -60,7 +60,7 @@
                   data-bs-target="#staticModal{{ loop.index }}"
                   onclick="fetchAstronautData('{{ astronaut.astronaut_id }}', '{{ loop.index }}')"
                 >
-                  Button with data-bs-target
+                  Edit Astronaut
                 </button>
               </p>
               <div
@@ -88,7 +88,7 @@
                         aria-label="Close"
                       ></button>
                     </div>
-                    <form class="modal-body m-4">
+                    <form class="modal-body m-4" id="editForm{{ loop.index }}" action="/manage_astronauts?astronaut_id={{astronaut.astronaut_id}}" method="POST">
                       <div class="row mb-2">
                         <div class="col">
                           <div class="ps-1">First Name</div>
@@ -282,6 +282,6 @@
     })
     //.catch(error => console.error('Error:', error));
   }
-  </script>
+</script>
 
 {% endblock %}

@@ -142,8 +142,8 @@ def createMission():
 @app.route("/manage_astronauts", methods=["GET", "POST"])
 def manageAstronauts():
     if 'loggedin' in session:
+        astronaut_id = request.args.get('astronaut_id')
         if request.method == "GET":
-            astronaut_id = request.args.get('astronaut_id')
             if not astronaut_id:
                 companyId = session['userid']
                 cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -196,7 +196,24 @@ def manageAstronauts():
                 else:
                     return jsonify({'error': 'Astronaut not found'}), 404
         elif request.method == "POST":
-            return
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor.execute('''
+            UPDATE Person
+            SET title=%s, first_name=%s, middle_name=%s, last_name=%s
+            WHERE id=%s
+            ''', (request.form.get('title'), request.form.get('fname'), request.form.get('mname'), request.form.get('lname'), astronaut_id))
+
+            # Update the Astronaut table
+            cursor.execute('''
+                UPDATE Astronaut
+                SET nationality=%s, rank=%s, years_of_experience=%s
+                WHERE id=%s
+                ''', (request.form.get('nationality'), request.form.get('rank'), request.form.get('exp'), astronaut_id))
+            mysql.connection.commit()
+            return redirect(url_for('manageAstronauts'))
+    else:
+        print("Not logged in\n")
+        return redirect(url_for('login'))
 @app.route("/assign_trainings", methods=["GET", "POST"])
 def assignTrainings():
 
