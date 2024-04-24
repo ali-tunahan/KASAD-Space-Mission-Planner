@@ -306,6 +306,10 @@ def admin():
     return render_template('admin_page.html', report=report, report_type=report_type)
 
 
+@app.errorhandler(404)
+def page_not_found(e):
+    # Note 'e' is the error object
+    return render_template('error_page.html'), 404
 
 
 
