@@ -13,6 +13,71 @@
     z-index: 10;
   }
 </style>
+
+<button class="btn btn-primary float-end mx-5 mt-4" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">Filters</button>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel" data-bs-scroll="true" data-bs-backdrop="false">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="offcanvasRightLabel">Filters</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <form action="/manage_astronauts" method="GET">
+      <div class="row g-2 m-2"> Birth Date</div>
+      <div class="row g-2">
+        <div class="col-md">
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control" name="dateOfBirthLower" id="floatingDateLower" placeholder="12-05-1962">
+            <label for="floatingDateLower">Min</label>
+          </div>
+        </div>
+        <div class="col-md">
+          <div class="form-floating">
+            <input type="text" class="form-control" name="dateOfBirthUpper" id="floatingDateUpper" placeholder="12-05-1991">
+            <label for="floatingDateUpper">Max</label>
+          </div>
+        </div>
+      </div>
+      <div class="row g-2 m-2"> Nationality</div>
+      <div class="row g-2">
+        <div class="col-md">
+          <div>
+            <input type="text" class="form-control" name="nationalityFilter" id="floatingNationality">
+          </div>
+        </div>
+      </div>
+      <div class="row g-2 m-2 pt-2"> Rank</div>
+      <div class="row g-2">
+        <div class="col-md">
+          <div>
+            <input type="text" class="form-control" name="rankFilter" id="rankFilter">
+          </div>
+        </div>
+      </div>
+      <div class="row g-2 m-2 pt-2"> Years of Experience</div>
+      <div class="row g-2">
+        <div class="col-md">
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control" name="yearsOfExperienceLower" id="floatingExperienceLower" placeholder="12-05-1962">
+            <label for="floatingExperienceLower">Min</label>
+          </div>
+        </div>
+        <div class="col-md">
+          <div class="form-floating">
+            <input type="text" class="form-control" name="yearsOfExperienceUpper" id="floatingExperienceUpper" placeholder="12-05-1991">
+            <label for="floatingInputGrid">Max</label>
+          </div>
+        </div>
+      </div>
+      <div class="row w-25 m-2">
+        <button type="submit" class="btn btn-secondary">
+          Filter
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="container-fluid py-4 px-5">
   <h1 class="display-6 pb-2">Manage Astronauts</h1>
   <div class="accordion" id="accordionExample">
@@ -54,7 +119,7 @@
             <div class="pt-4">
               <p class="d-inline-flex gap-1">
                 <button
-                  class="btn btn-primary"
+                  class="btn btn-secondary"
                   type="button"
                   data-bs-toggle="modal"
                   data-bs-target="#staticModal{{ loop.index }}"

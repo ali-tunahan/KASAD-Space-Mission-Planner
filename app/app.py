@@ -147,7 +147,6 @@ def manageAstronauts():
             if not astronaut_id:
                 companyId = session['userid']
                 cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-                #Filters are not included in the query rn. Needs to be implemented
                 cursor.execute('''
                     SELECT 
                     A.id AS astronaut_id,
@@ -170,7 +169,19 @@ def manageAstronauts():
                     ) AS total_missions_count
                     FROM Astronaut A NATURAL JOIN Person P
                     WHERE
-                    A.company_id = %s ''', (companyId, companyId,companyId))
+                    A.company_id = %s AND
+                    (%s = '' OR A.date_of_birth >= %s) AND
+                    (%s = '' OR A.date_of_birth <= %s) AND
+                    (%s = '' OR A.nationality = %s) AND
+                    (%s = '' OR A.rank = %s) AND
+                    (%s = '' OR A.years_of_experience >= %s) AND
+                    (%s = '' OR A.years_of_experience <= %s) ''', 
+                    (companyId, companyId, companyId, request.args.get('dateOfBirthLower'), request.args.get('dateOfBirthLower'), 
+                     request.args.get('dateOfBirthUpper'), request.args.get('dateOfBirthUpper'), 
+                     request.args.get('nationalityFilter'), request.args.get('nationalityFilter'), 
+                     request.args.get('rankFilter'), request.args.get('rankFilter'),
+                     request.args.get('yearsOfExperienceLower'), request.args.get('yearsOfExperienceLower'), 
+                     request.args.get('yearsOfExperienceUpper'), request.args.get('yearsOfExperienceUpper')))
                 astronauts = cursor.fetchall()
                 return render_template("manage_astronauts.html", astronauts = astronauts)
             else:
