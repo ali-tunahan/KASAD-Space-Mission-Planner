@@ -2,6 +2,7 @@ import re
 import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_mysqldb import MySQL
+from datetime import datetime
 import MySQLdb.cursors
 import uuid
 
@@ -217,8 +218,24 @@ def assignTrainings():
         return redirect(url_for('assignTrainings'))  # Redirect to the same page after processing
 @app.route("/bid_for_mission", methods=["GET", "POST"])
 def bidForMission():
-
-    return render_template("bid_for_mission.html")
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    # if request.method == "GET":
+    cursor.execute("SELECT * FROM Mission")
+    missions = cursor.fetchall()
+    
+    for mission in missions:
+        if mission['launch_date']:
+            mission['launch_date'] = mission['launch_date'].strftime('%Y-%m-%d')
+            
+    return render_template("bid_for_mission.html", missions=missions)
+    
+    # TODO: Handle POST request to submit a bid
+    # elif request.method == "POST":
+    #     mission_id = request.form.get("mission_id")
+    #     bid_amount = request.form.get("bid_amount")
+    #     astronaut_id = request.form.get("astronaut_id")
+        
+    #     return redirect(url_for("bidForMission"))
 
 @app.route("/admin_page", methods=["GET", "POST"])
 def admin():

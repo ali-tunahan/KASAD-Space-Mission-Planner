@@ -1,4 +1,60 @@
-{% extends "master.html" %} {% block title%} {% endblock%} {% block content%}
+{% extends "master.html" %}
+{% block title %}
+Bid for a Mission
+{% endblock %}
 
-<h1>BID PAGE</h1>
+{% block content %}
+
+<style>
+    .mission-item {
+      background-color: #33333f; /* Dark background for contrast */
+      color: white; /* White text for readability */
+      padding: 10px;
+      margin-bottom: 5px;
+      border-radius: 5px;
+    }
+    .buttons-right {
+      float: right; /* Align buttons to the right */
+    }
+    .button-spacing {
+      margin-left: 10px; /* Space between buttons */
+    }
+  </style>
+  
+  <div class="container-fluid py-4 px-5">
+    <h1 class="display-6 pb-2">Bid for a Mission</h1>
+    {% for mission in missions %}
+    <div class="mission-item">
+      <h5>{{ mission.title }}</h5>
+      <p><strong>Description:</strong> {{ mission.description }}</p>
+      <div class="buttons-right">
+        <button type="button" class="btn btn-info button-spacing" data-bs-toggle="modal" data-bs-target="#modal{{ mission.mission_id }}">
+          View Details
+        </button>
+        <button type="button" class="btn btn-success button-spacing">BID</button>
+      </div>
+  
+      <!-- Modal -->
+      <div class="modal fade" id="modal{{ mission.mission_id }}" tabindex="-1" aria-labelledby="modalLabel{{ mission.mission_id }}" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalLabel{{ mission.mission_id }}">{{ mission.title }}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <p><strong>Launch Date:</strong> {{ mission.launch_date }}</p>
+              <p><strong>Duration:</strong> {{ mission.duration }} months</p>
+              <p><strong>Payload Volume:</strong> {{ mission.payload_volume }} cubic meters</p>
+              <p><strong>Payload Weight:</strong> {{ mission.payload_weight }} kg</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
 {% endblock %}
