@@ -138,6 +138,46 @@ def register():
 
 @app.route("/create_mission", methods=["GET", "POST"])
 def createMission():
+    if request.method == "POST":
+        # Extract data from form
+        title = request.form.get('title')
+        description = request.form.get('description')
+        objectives = request.form.get('objectives')
+        launch_date = request.form.get('launch_date')
+        duration = request.form.get('duration')
+        num_of_astronauts = request.form.get('num_of_astronauts')
+        payload_volume = request.form.get('payload_volume')
+        payload_weight = request.form.get('payload_weight')
+
+        # Convert date from string to date object if necessary
+        try:
+            launch_date = datetime.strptime(launch_date, '%Y-%m-%d')
+        except ValueError:
+            flash("Invalid date format. Please use YYYY-MM-DD.", 'error')
+            return render_template("create_mission.html")
+        
+        # Data validation before inserting into the database
+        if not title or not description:
+            flash("Title and description are required.", 'error')
+            return render_template("create_mission.html")
+
+        # Insert data into the database
+        try:
+            cursor = mysql.connection.cursor()
+            cursor.execute('''
+                INSERT INTO Mission (mission_id, employer_id, title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ''', (uuid.uuid4().hex, session.get('company_id'), title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight))
+            mysql.connection.commit()
+            flash("Mission created successfully!", 'success')
+            return redirect(url_for('main'))  # Redirect to the main page or a confirmation page
+        
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f"An error occurred: {e}", 'error')
+            return render_template("create_mission.html")
+
+    # If not POST, or if there was an error, show the form again
     return render_template("create_mission.html")
 
 @app.route("/manage_astronauts", methods=["GET", "POST"])
