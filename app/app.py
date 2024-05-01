@@ -148,17 +148,15 @@ def createMission():
         num_of_astronauts = request.form.get('num_of_astronauts')
         payload_volume = request.form.get('payload_volume')
         payload_weight = request.form.get('payload_weight')
-
-        # Convert date from string to date object if necessary
-        try:
-            launch_date = datetime.strptime(launch_date, '%Y-%m-%d')
-        except ValueError:
-            flash("Invalid date format. Please use YYYY-MM-DD.", 'error')
+        
+        # Data validation
+        if not title or not description or not objectives or not launch_date or not duration or not num_of_astronauts or not payload_volume or not payload_weight:
+            flash("Fill all the necessary fields.", 'error')
             return render_template("create_mission.html")
         
-        # Data validation before inserting into the database
-        if not title or not description:
-            flash("Title and description are required.", 'error')
+        # Check date is in the future
+        if datetime.strptime(launch_date, '%Y-%m-%d') < datetime.now():
+            flash("Launch date must be in the future.", 'error')
             return render_template("create_mission.html")
 
         # Insert data into the database
@@ -173,11 +171,9 @@ def createMission():
             return redirect(url_for('main'))  # Redirect to the main page or a confirmation page
         
         except Exception as e:
-            mysql.connection.rollback()
-            flash(f"An error occurred: {e}", 'error')
+            print("Error executing SQL query:", e)
             return render_template("create_mission.html")
 
-    # If not POST, or if there was an error, show the form again
     return render_template("create_mission.html")
 
 @app.route("/manage_astronauts", methods=["GET", "POST"])
