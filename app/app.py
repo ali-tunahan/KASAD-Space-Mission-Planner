@@ -153,10 +153,14 @@ def manageAstronauts():
                     cursor.execute('''
                         SELECT 
                         A.id AS astronaut_id,
+                        A.years_of_experience,
                         P.title,
                         P.first_name,
                         P.middle_name,
                         P.last_name,
+                        AA.age,
+                        A_stats.performance,
+                        A_stats.experience,
                         (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
                         JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
                         JOIN Mission M ON MAB.mission_id = M.mission_id
@@ -170,7 +174,7 @@ def manageAstronauts():
                         WHERE BHA.id = A.id AND A.company_id = %s
                         AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
                         ) AS total_missions_count
-                        FROM Astronaut A NATURAL JOIN Person P
+                        FROM Astronaut A NATURAL JOIN Person P NATURAL JOIN Astronaut_Age AS AA JOIN Astronaut_Stats AS A_stats ON AA.id=A_stats.astronaut_id
                         WHERE
                         A.company_id = %s ''', (companyId, companyId, companyId))
                 else:
@@ -178,10 +182,14 @@ def manageAstronauts():
                     cursor.execute('''
                         SELECT 
                         A.id AS astronaut_id,
+                        A.years_of_experience,
                         P.title,
                         P.first_name,
                         P.middle_name,
                         P.last_name,
+                        AA.age,
+                        A_stats.performance,
+                        A_stats.experience,
                         (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
                         JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
                         JOIN Mission M ON MAB.mission_id = M.mission_id
@@ -195,7 +203,7 @@ def manageAstronauts():
                         WHERE BHA.id = A.id AND A.company_id = %s
                         AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
                         ) AS total_missions_count
-                        FROM Astronaut A NATURAL JOIN Person P
+                        FROM Astronaut A NATURAL JOIN Person P NATURAL JOIN Astronaut_Age AA JOIN Astronaut_Stats AS A_stats ON AA.id=A_stats.astronaut_id
                         WHERE
                         A.company_id = %s AND
                         (%s = '' OR A.date_of_birth >= %s) AND
