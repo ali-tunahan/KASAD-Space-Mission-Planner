@@ -147,41 +147,69 @@ def manageAstronauts():
             if not astronaut_id:
                 companyId = session['userid']
                 cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-                cursor.execute('''
-                    SELECT 
-                    A.id AS astronaut_id,
-                    P.title,
-                    P.first_name,
-                    P.middle_name,
-                    P.last_name,
-                    (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
-                    JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
-                    JOIN Mission M ON MAB.mission_id = M.mission_id
-                    WHERE BHA.id = A.id
-                    AND A.company_id = %s
-                    AND (M.launch_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) OR DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE())
-                    ) AS filtered_missions_count,
-                    (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
-                    JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
-                    JOIN Mission M ON MAB.mission_id = M.mission_id
-                    WHERE BHA.id = A.id AND A.company_id = %s
-                    AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
-                    ) AS total_missions_count
-                    FROM Astronaut A NATURAL JOIN Person P
-                    WHERE
-                    A.company_id = %s AND
-                    (%s = '' OR A.date_of_birth >= %s) AND
-                    (%s = '' OR A.date_of_birth <= %s) AND
-                    (%s = '' OR A.nationality = %s) AND
-                    (%s = '' OR A.rank = %s) AND
-                    (%s = '' OR A.years_of_experience >= %s) AND
-                    (%s = '' OR A.years_of_experience <= %s) ''', 
-                    (companyId, companyId, companyId, request.args.get('dateOfBirthLower'), request.args.get('dateOfBirthLower'), 
-                     request.args.get('dateOfBirthUpper'), request.args.get('dateOfBirthUpper'), 
-                     request.args.get('nationalityFilter'), request.args.get('nationalityFilter'), 
-                     request.args.get('rankFilter'), request.args.get('rankFilter'),
-                     request.args.get('yearsOfExperienceLower'), request.args.get('yearsOfExperienceLower'), 
-                     request.args.get('yearsOfExperienceUpper'), request.args.get('yearsOfExperienceUpper')))
+
+                #Initial request without any filters
+                if not bool(request.args):
+                    cursor.execute('''
+                        SELECT 
+                        A.id AS astronaut_id,
+                        P.title,
+                        P.first_name,
+                        P.middle_name,
+                        P.last_name,
+                        (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
+                        JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
+                        JOIN Mission M ON MAB.mission_id = M.mission_id
+                        WHERE BHA.id = A.id
+                        AND A.company_id = %s
+                        AND (M.launch_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) OR DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE())
+                        ) AS filtered_missions_count,
+                        (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
+                        JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
+                        JOIN Mission M ON MAB.mission_id = M.mission_id
+                        WHERE BHA.id = A.id AND A.company_id = %s
+                        AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
+                        ) AS total_missions_count
+                        FROM Astronaut A NATURAL JOIN Person P
+                        WHERE
+                        A.company_id = %s ''', (companyId, companyId, companyId))
+                else:
+                    #Request with filters
+                    cursor.execute('''
+                        SELECT 
+                        A.id AS astronaut_id,
+                        P.title,
+                        P.first_name,
+                        P.middle_name,
+                        P.last_name,
+                        (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
+                        JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
+                        JOIN Mission M ON MAB.mission_id = M.mission_id
+                        WHERE BHA.id = A.id
+                        AND A.company_id = %s
+                        AND (M.launch_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) OR DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE())
+                        ) AS filtered_missions_count,
+                        (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
+                        JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
+                        JOIN Mission M ON MAB.mission_id = M.mission_id
+                        WHERE BHA.id = A.id AND A.company_id = %s
+                        AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
+                        ) AS total_missions_count
+                        FROM Astronaut A NATURAL JOIN Person P
+                        WHERE
+                        A.company_id = %s AND
+                        (%s = '' OR A.date_of_birth >= %s) AND
+                        (%s = '' OR A.date_of_birth <= %s) AND
+                        (%s = '' OR A.nationality = %s) AND
+                        (%s = '' OR A.rank = %s) AND
+                        (%s = '' OR A.years_of_experience >= %s) AND
+                        (%s = '' OR A.years_of_experience <= %s) ''', 
+                        (companyId, companyId, companyId, request.args.get('dateOfBirthLower'), request.args.get('dateOfBirthLower'), 
+                        request.args.get('dateOfBirthUpper'), request.args.get('dateOfBirthUpper'), 
+                        request.args.get('nationalityFilter'), request.args.get('nationalityFilter'), 
+                        request.args.get('rankFilter'), request.args.get('rankFilter'),
+                        request.args.get('yearsOfExperienceLower'), request.args.get('yearsOfExperienceLower'), 
+                        request.args.get('yearsOfExperienceUpper'), request.args.get('yearsOfExperienceUpper')))
                 astronauts = cursor.fetchall()
                 return render_template("manage_astronauts.html", astronauts = astronauts)
             else:
