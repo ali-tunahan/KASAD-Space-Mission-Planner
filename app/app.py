@@ -206,9 +206,9 @@ def assignTrainings():
                     astronauts_cant_take.append(astronaut_id)
             
             if not astronauts_cant_take:
-                flash(f'All selected astronauts have been assigned to training {training_id}', 'info')
+                flash(f'All selected astronauts have been assigned to training {training_id}', 'success')
             else:
-                flash(f'Astronauts {", ".join(astronauts_cant_take)} can not be assigned', 'alert')
+                flash(f'Astronauts {", ".join(astronauts_cant_take)} can not be assigned', 'danger')
 
         except Exception as e:
             print("Error executing SQL query:", e)
