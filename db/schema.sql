@@ -311,7 +311,10 @@ INSERT INTO User (id, email, password) VALUES
 INSERT INTO Person (id, title, first_name, middle_name, last_name) VALUES
 ('11111111-1111-1111-1111-111111111111', 'Mr.', 'John', 'Q.', 'Doe'),
 ('22222222-2222-2222-2222-222222222222', 'Ms.', 'Jane', 'R.', 'Smith'),
-('33333333-3333-3333-3333-333333333333', 'Dr.', 'Jim', 'B.', 'Beam');
+('33333333-3333-3333-3333-333333333333', 'Dr.', 'Jim', 'B.', 'Beam'),
+('77777777-7777-7777-7777-777777777777', 'Dr.', 'Ali', 'B.', 'Hasde'),
+('88888888-8888-8888-8888-888888888888', 'Dr.', 'Ahmad', 'K.', 'Savarsh'),
+('99999999-9999-9999-9999-999999999999', 'Mr.', 'Gnour', 'The', 'Devourer');
 
 INSERT INTO Admin (id, assigned_region) VALUES
 ('11111111-1111-1111-1111-111111111111', 'North America'),

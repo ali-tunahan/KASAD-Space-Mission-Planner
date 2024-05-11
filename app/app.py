@@ -179,7 +179,7 @@ def assignTrainings():
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT T.name, T.training_id, T.code, T.description, T.duration, IFNULL(GROUP_CONCAT(P.code), Null) AS prereq_ids FROM Training T LEFT JOIN Training_Prerequisite_Training ON training_id = train_id LEFT JOIN Training P ON P.training_id = prereq_id GROUP BY T.training_id')
         trainings = cursor.fetchall()   
-        cursor.execute('SELECT * FROM Astronaut')
+        cursor.execute('SELECT * FROM Astronaut A, Person P WHERE A.id=P.id')
         astronauts = cursor.fetchall()
         return render_template("assign_trainings.html", trainings=trainings, astronauts=astronauts)
     else:
@@ -204,9 +204,11 @@ def assignTrainings():
                     mysql.connection.commit()
                 else:
                     astronauts_cant_take.append(astronaut_id)
-            
+            cursor.execute('SELECT name FROM Training WHERE training_id = %s', (training_id,))
+            training_name_result = cursor.fetchone()
+            training_name = training_name_result['name']
             if not astronauts_cant_take:
-                flash(f'All selected astronauts have been assigned to training {training_id}', 'success')
+                flash(f'All selected astronauts have been assigned to training {training_name}', 'success')
             else:
                 flash(f'Astronauts {", ".join(astronauts_cant_take)} can not be assigned', 'danger')
 
