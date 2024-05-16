@@ -25,9 +25,24 @@ Bid for a Mission
         justify-content: space-between;
         align-items: center;
     }
-    .header-description-row {
-        
+    .modal-content {
+        background-color: #33333f; /* Matching the mission item background */
+        color: white;
     }
+    
+    .modal-header, .modal-footer {
+        border-bottom: 1px solid #444;
+        border-top: 1px solid #444;
+    }
+    
+    .modal-body {
+        margin: 15px;
+    }
+    
+    .modal-lg {
+        max-width: 80%; /* Larger modal for better form display */
+    }
+    
 </style>
   
 <div class="container-fluid py-4 px-5">
@@ -40,31 +55,65 @@ Bid for a Mission
                 <button type="button" class="btn btn-info button-spacing" data-bs-toggle="modal" data-bs-target="#modal{{ mission.mission_id }}">
                     View Details
                 </button>
-                <button type="button" class="btn btn-success button-spacing">BID</button>
+                <button type="button" class="btn btn-success button-spacing" data-bs-toggle="modal" data-bs-target="#bidModal{{ mission.mission_id }}">
+                    BID
+                </button>
             </div>
         </div>
         <p><strong>Description:</strong> {{ mission.description }}</p>
   
       <!-- Modal -->
-      <div class="modal fade" id="modal{{ mission.mission_id }}" tabindex="-1" aria-labelledby="modalLabel{{ mission.mission_id }}" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-          <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalLabel{{ mission.mission_id }}">{{ mission.title }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal fade" id="modal{{ mission.mission_id }}" tabindex="-1" aria-labelledby="modalLabel{{ mission.mission_id }}" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalLabel{{ mission.mission_id }}">{{ mission.title }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="mission-item">
+                    <p><strong>Launch Date:</strong> {{ mission.launch_date }}</p>
+                    <p><strong>Payload Volume:</strong> {{ mission.payload_volume }} cubic meters</p>
+                    <p><strong>Payload Weight:</strong> {{ mission.payload_weight }} kg</p>
+                    <p><strong>Duration:</strong> {{ mission.duration }} months</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
-            <div class="mission-item">
-                <p><strong>Launch Date:</strong> {{ mission.launch_date }}</p>
-                <p><strong>Payload Volume:</strong> {{ mission.payload_volume }} cubic meters</p>
-                <p><strong>Payload Weight:</strong> {{ mission.payload_weight }} kg</p>
-                <p><strong>Duration:</strong> {{ mission.duration }} months</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-          </div>
         </div>
-      </div>
+        <!-- Bid Modal -->
+        <div class="modal fade" id="bidModal{{ mission.mission_id }}" tabindex="-1" aria-labelledby="bidModalLabel{{ mission.mission_id }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="bidModalLabel{{ mission.mission_id }}">Submit a Bid for {{ mission.title }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="POST" action="{{ url_for('bidForMission') }}">
+                            <input type="hidden" name="mission_id" value="{{ mission.mission_id }}">
+                            <div class="mb-3">
+                                <label for="bidAmount{{ mission.mission_id }}" class="form-label">Bid Amount ($)</label>
+                                <input type="number" class="form-control" id="bidAmount{{ mission.mission_id }}" name="bid_amount" min="1" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="astronaut{{ mission.mission_id }}" class="form-label">Select Astronauts</label>
+                                <select multiple class="form-select" id="astronaut{{ mission.mission_id }}" name="astronaut_ids">
+                                    {% for astronaut in astronauts %}
+                                    <option value="{{ astronaut.id }}">{{ astronaut.first_name }} {{ astronaut.last_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Submit Bid</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
      {% endfor %}
 </div>

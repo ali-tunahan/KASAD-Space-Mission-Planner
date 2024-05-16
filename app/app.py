@@ -255,23 +255,64 @@ def assignTrainings():
 @app.route("/bid_for_mission", methods=["GET", "POST"])
 def bidForMission():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    # if request.method == "GET":
-    cursor.execute("SELECT * FROM Mission")
-    missions = cursor.fetchall()
+    if request.method == "GET":
+        cursor.execute("SELECT * FROM Mission")
+        missions = cursor.fetchall()
+        for mission in missions:
+            if mission['launch_date']:
+                mission['launch_date'] = mission['launch_date'].strftime('%Y-%m-%d')
+        return render_template("bid_for_mission.html", missions=missions)
     
-    for mission in missions:
-        if mission['launch_date']:
-            mission['launch_date'] = mission['launch_date'].strftime('%Y-%m-%d')
-            
-    return render_template("bid_for_mission.html", missions=missions)
-    
-    # TODO: Handle POST request to submit a bid
-    # elif request.method == "POST":
-    #     mission_id = request.form.get("mission_id")
-    #     bid_amount = request.form.get("bid_amount")
-    #     astronaut_id = request.form.get("astronaut_id")
+    elif request.method == "POST":
+        bid_amount = request.form.get("bid_amount")
+        astronaut_ids = request.form.getlist("astronaut_ids")  
         
-    #     return redirect(url_for("bidForMission"))
+        try:
+            bid_amount = float(bid_amount) 
+        except ValueError:
+            flash("Invalid bid amount. Please enter a valid number.", "error")
+            return redirect(url_for("bidForMission"))
+
+        #TODO: Check requirements
+        if bid_amount <= 0:
+            flash("Bid amount must be greater than $0.", "error")
+            return redirect(url_for("bidForMission"))
+        
+        cursor.execute("INSERT INTO Bid (bid_id, bidder_id, amount, bid_date, status) VALUES (%s, %s, %s, CURDATE(), 'Open')", (uuid.uuid4().hex, session.get('company_id'), bid_amount))
+        for astronaut_id in astronaut_ids:
+            cursor.execute("INSERT INTO Bid_Has_Astronaut (bid_id, id) VALUES (%s, %s)", (last_inserted_bid_id, astronaut_id))
+        mysql.connection.commit()
+        
+        return redirect(url_for("bidForMission"))
+
+@app.route("/view_bids", methods=["GET", "POST"])
+def viewBids():
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+    if request.method == "POST":
+        bid_id = request.form.get('bid_id')
+        if bid_id:
+            try:
+                cursor.execute("UPDATE Bid SET status = 'Accepted' WHERE bid_id = %s", (bid_id,))
+                mysql.connection.commit()
+                flash('Bid accepted successfully!', 'success')
+                #TODO: Accept only one bid
+            except Exception as e:
+                flash(f'Error accepting bid: {str(e)}', 'error')
+        return redirect(url_for('viewBids'))
+
+    cursor.execute('''
+        SELECT Bid.bid_id, Bid.amount, Bid.bid_date, Bid.status, Mission.title AS mission_title, Company.name AS company_name
+        FROM Bid
+        INNER JOIN Mission_Accepted_Bid ON Bid.bid_id = Mission_Accepted_Bid.bid_id
+        INNER JOIN Mission ON Mission_Accepted_Bid.mission_id = Mission.mission_id
+        INNER JOIN Bidder ON Bid.bidder_id = Bidder.id
+        INNER JOIN Company ON Bidder.id = Company.id
+        ORDER BY Bid.amount DESC
+    ''')
+    bids = cursor.fetchall()
+    return render_template("view_bids.html", bids=bids)
+
 
 @app.route("/admin_page", methods=["GET", "POST"])
 def admin():
