@@ -1,0 +1,12 @@
+{% extends "base.html" %} {% block content%}
+
+<div class="container text-center">
+    <h1>Oops! Page not found.</h1>
+    <p>We can't seem to find the page you're looking for.</p>
+    <img src="{{ url_for('static', filename='CosmoCrewLogo.svg') }}" alt="CosmoCrew Logo" class="img-fluid" style="max-width: 80%">
+    <div>
+        <a href="{{ url_for('main') }}">Go Back Home</a>
+    </div>
+</div>
+
+{% endblock %}
