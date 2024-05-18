@@ -88,6 +88,16 @@
         />
       </div>
       <div class="mb-3">
+        <label for="companySelect" class="form-label">Select Company</label>
+        <select class="form-control" id="companySelect" name="company_id" required>
+            <option value="">Please select a company</option>
+            {% for company in companies %}
+            <option value="{{ company['id'] }}">{{ company['name'] }}</option>
+            {% endfor %}
+        </select>
+        <div class="invalid-feedback">Please select a company.</div>
+    </div>
+      <div class="mb-3">
         <label for="dobInput" class="form-label">Date of Birth</label>
         <input
           type="date"
@@ -300,8 +310,20 @@
       "#astronautFields input"
     );
 
+    const companyInputFields = document.querySelectorAll(
+      "#companyFields input"
+    );
+
     astronautInputFields.forEach((field) => {
-      if (accountType === "Astronaut") {
+      if (accountType === "Astronaut" && field.id !== "middleNameInput") {
+        field.required = true;
+      } else {
+        field.required = false;
+      }
+    });
+
+    companyInputFields.forEach((field) => {
+      if (accountType === "Company") {
         field.required = true;
       } else {
         field.required = false;
