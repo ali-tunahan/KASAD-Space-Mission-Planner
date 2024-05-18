@@ -2,10 +2,13 @@ import re
 import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_mysqldb import MySQL
+from flask import Response
 from datetime import datetime
 import MySQLdb.cursors
 import uuid
-from flask import Response
+import datetime
+from datetime import datetime
+
 
 
 app = Flask(__name__)
@@ -16,6 +19,7 @@ app.config["MYSQL_HOST"] = "db"
 app.config["MYSQL_USER"] = "root"
 app.config["MYSQL_PASSWORD"] = "dasak"
 app.config["MYSQL_DB"] = "DASAK"
+app.debug = True
 
 mysql = MySQL(app)
 
@@ -229,6 +233,150 @@ def createMission():
             return render_template("create_mission.html")
     return render_template("create_mission.html")
 
+@app.route("/manage_astronauts", methods=["GET", "POST", "DELETE"])
+def manageAstronauts():
+    if 'loggedin' in session:
+        astronaut_id = request.args.get('astronaut_id')
+        if request.method == "GET":
+            if not astronaut_id:
+                companyId = session['userid']
+                cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
+                #Initial request without any filters
+                if not bool(request.args):
+                    cursor.execute('''
+                        SELECT 
+                        A.id AS astronaut_id,
+                        A.years_of_experience,
+                        P.title,
+                        P.first_name,
+                        P.middle_name,
+                        P.last_name,
+                        AA.age,
+                        A_stats.performance,
+                        A_stats.experience,
+                        (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
+                        JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
+                        JOIN Mission M ON MAB.mission_id = M.mission_id
+                        WHERE BHA.id = A.id
+                        AND A.company_id = %s
+                        AND (M.launch_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) OR DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE())
+                        ) AS filtered_missions_count,
+                        (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
+                        JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
+                        JOIN Mission M ON MAB.mission_id = M.mission_id
+                        WHERE BHA.id = A.id AND A.company_id = %s
+                        AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
+                        ) AS total_missions_count
+                        FROM Astronaut A NATURAL JOIN Person P NATURAL JOIN Astronaut_Age AS AA JOIN Astronaut_Stats AS A_stats ON AA.id=A_stats.astronaut_id
+                        WHERE
+                        A.company_id = %s ''', (companyId, companyId, companyId))
+                else:
+                    #Request with filters
+                    cursor.execute('''
+                        SELECT 
+                        A.id AS astronaut_id,
+                        A.years_of_experience,
+                        P.title,
+                        P.first_name,
+                        P.middle_name,
+                        P.last_name,
+                        AA.age,
+                        A_stats.performance,
+                        A_stats.experience,
+                        (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
+                        JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
+                        JOIN Mission M ON MAB.mission_id = M.mission_id
+                        WHERE BHA.id = A.id
+                        AND A.company_id = %s
+                        AND (M.launch_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) OR DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE())
+                        ) AS filtered_missions_count,
+                        (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
+                        JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
+                        JOIN Mission M ON MAB.mission_id = M.mission_id
+                        WHERE BHA.id = A.id AND A.company_id = %s
+                        AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
+                        ) AS total_missions_count
+                        FROM Astronaut A NATURAL JOIN Person P NATURAL JOIN Astronaut_Age AA JOIN Astronaut_Stats AS A_stats ON AA.id=A_stats.astronaut_id
+                        WHERE
+                        A.company_id = %s AND
+                        (%s = '' OR A.date_of_birth >= %s) AND
+                        (%s = '' OR A.date_of_birth <= %s) AND
+                        (%s = '' OR A.nationality = %s) AND
+                        (%s = '' OR A.rank = %s) AND
+                        (%s = '' OR A.years_of_experience >= %s) AND
+                        (%s = '' OR A.years_of_experience <= %s) ''', 
+                        (companyId, companyId, companyId, request.args.get('dateOfBirthLower'), request.args.get('dateOfBirthLower'), 
+                        request.args.get('dateOfBirthUpper'), request.args.get('dateOfBirthUpper'), 
+                        request.args.get('nationalityFilter'), request.args.get('nationalityFilter'), 
+                        request.args.get('rankFilter'), request.args.get('rankFilter'),
+                        request.args.get('yearsOfExperienceLower'), request.args.get('yearsOfExperienceLower'), 
+                        request.args.get('yearsOfExperienceUpper'), request.args.get('yearsOfExperienceUpper')))
+                astronauts = cursor.fetchall()
+                return render_template("manage_astronauts.html", astronauts = astronauts)
+            else:
+                companyId = session['userid']
+                cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+                cursor.execute('''
+                    SELECT 
+                    A.id AS astronaut_id,
+                    P.title,
+                    P.first_name,
+                    P.middle_name,
+                    P.last_name,
+                    A.date_of_birth,
+                    A.nationality,
+                    A.rank,
+                    A.years_of_experience
+                    FROM Astronaut A NATURAL JOIN Person P
+                    WHERE A.id = %s AND A.company_id = %s
+                ''', (astronaut_id, companyId))
+                astronaut_data = cursor.fetchone()
+                if astronaut_data:
+                    # Parse the date_of_birth into day, month, and year components
+                    date_of_birth = astronaut_data['date_of_birth']
+                    astronaut_data['day_of_birth'] = date_of_birth.day
+                    astronaut_data['month_of_birth'] = date_of_birth.month
+                    astronaut_data['year_of_birth'] = date_of_birth.year
+                    del astronaut_data['date_of_birth']
+
+                    return jsonify(astronaut_data)
+                else:
+                    return jsonify({'error': 'Astronaut not found'}), 404
+        elif request.method == "POST":
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor.execute('''
+            UPDATE Person
+            SET title=%s, first_name=%s, middle_name=%s, last_name=%s
+            WHERE id=%s
+            ''', (request.form.get('title'), request.form.get('fname'), request.form.get('mname'), request.form.get('lname'), astronaut_id))
+
+            day = min(max(int(request.form.get('day')), 1), 31)
+            month = min(max(int(request.form.get('month')), 1), 12)
+            year = min(max(int(request.form.get('year')), 1900), 2005)
+            date_of_birth = datetime(year, month, day).date()
+
+            # Update the Astronaut table
+            cursor.execute('''
+                UPDATE Astronaut
+                SET nationality=%s, rank=%s, years_of_experience=%s, date_of_birth=%s
+                WHERE id=%s
+                ''', (request.form.get('nationality'), request.form.get('rank'), request.form.get('exp'), date_of_birth, astronaut_id))
+            mysql.connection.commit()
+            return redirect(url_for('manageAstronauts'))
+        elif request.method == "DELETE":
+            print("DELETE ID:"+astronaut_id)
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor.execute('''
+                UPDATE Astronaut
+                SET company_id=NULL
+                WHERE id=%s
+                ''',(astronaut_id,))
+            mysql.connection.commit()
+    else:
+        print("Not logged in\n")
+        return redirect(url_for('login'))
+      
 @app.route('/logout')
 def logout():
     """Log out the user by clearing the session and redirecting to the login page."""
@@ -238,45 +386,6 @@ def logout():
     return redirect(url_for('login'))
 
 
-@app.route("/manage_astronauts", methods=["GET", "POST"])
-def manageAstronauts():
-    redirect_if_not_logged_in = check_logged_in()
-    redirect_if_not_company = company_pageguard()
-    
-    if redirect_if_not_logged_in or redirect_if_not_company:
-        return redirect_if_not_logged_in
-    # if 'loggedin' in session:
-    #     if request.method == "GET":
-    #         companyId = session['userid']
-    #         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    #         #Filters are not included in the query rn. Needs to be implemented
-    #         cursor.execute('''
-    #             SELECT 
-    #             A.id AS astronaut_id,
-    #             P.title,
-    #             P.first_name,
-    #             P.middle_name,
-    #             P.last_name,
-    #             (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
-    #             JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
-    #             JOIN Mission M ON MAB.mission_id = M.mission_id
-    #             WHERE BHA.id = A.id
-    #             AND A.company_id = %s
-    #             AND (M.launch_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) OR DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE())
-    #             ) AS filtered_missions_count,
-    #             (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
-    #             JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
-    #             JOIN Mission M ON MAB.mission_id = M.mission_id
-    #             WHERE BHA.id = A.id AND A.company_id = @company_id 
-    #             AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
-    #             ) AS total_missions_count
-    #             FROM Astronaut A NATURAL JOIN Person P
-    #             WHERE
-    #             A.company_id = %s ''', (companyId, companyId, ))
-    #         astronauts = cursor.fetchall()
-    #         return render_template("manage_astronauts.html", astronauts = astronauts)
-    #return render_template("manage_astronauts.html", astronauts = astronauts)
-    return render_template("manage_astronauts.html")
 @app.route("/assign_trainings", methods=["GET", "POST"])
 def assignTrainings():
     redirect_if_not_logged_in = check_logged_in()
