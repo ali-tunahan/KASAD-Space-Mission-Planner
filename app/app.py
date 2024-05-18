@@ -43,6 +43,14 @@ def astronaut_pageguard():
         return None
     return redirect(url_for('login'))
 
+def get_user_id():
+    user_id = session.get('userid')
+    if not session.get('userid'):
+        print("No User Id")
+        return None
+    return user_id
+    
+
 @app.route("/")
 @app.route("/main", methods=["GET", "POST"])
 def main():
@@ -439,6 +447,62 @@ def admin():
 
 
     return render_template('admin_page.html', report=report, report_type=report_type)
+
+@app.route('/dashboard')
+def dashboard():
+    redirect_if_not_logged_in = check_logged_in()
+    redirect_if_not_astronaut = astronaut_pageguard()
+    
+    if redirect_if_not_logged_in or redirect_if_not_astronaut:
+        return redirect_if_not_logged_in
+    
+    user_id = get_user_id()
+    
+    current_trainings, past_trainings = get_trainings(user_id)
+    upcoming_missions, past_missions = get_missions(user_id)
+
+    return render_template('dashboard.html', current_trainings=current_trainings, past_trainings=past_trainings,
+                           upcoming_missions=upcoming_missions, past_missions=past_missions)
+    
+def get_trainings(astronaut_id):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    cursor.execute("""
+    SELECT T.*, ACT.status, ACT.training_id
+    FROM Training T
+    JOIN Astronaut_Completes_Training ACT ON T.training_id = ACT.training_id
+    WHERE ACT.astronaut_id = %s
+    """, (astronaut_id,))
+
+    trainings = cursor.fetchall()
+    current, past = [], []
+    for training in trainings:
+        if training['status'] == 1: # TODO assuming status 1 is complete
+            past.append(training)
+        else:
+            current.append(training)
+    return current, past
+
+def get_missions(astronaut_id):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    today = datetime.now().date()
+
+    cursor.execute("""
+    SELECT M.*, AM.mission_id
+    FROM Mission M
+    JOIN Astronaut_Accepted_Missions AM ON M.mission_id = AM.mission_id
+    WHERE AM.astronaut_id = %s
+    """, (astronaut_id,))
+
+    missions = cursor.fetchall()
+    upcoming, past = [], []
+    for mission in missions:
+        if mission['launch_date'] > today:
+            upcoming.append(mission)
+        else:
+            past.append(mission)
+    return upcoming, past
 
 
 @app.errorhandler(404)
