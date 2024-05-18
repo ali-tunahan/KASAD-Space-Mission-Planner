@@ -44,13 +44,14 @@
 
     </div>
 </div>
-<div class="collapse" id="collapseExample{{training.training_id}}">
+<div class="collapse mb-3" id="collapseExample{{training.training_id}}">
     <div class="card card-body">
-        Code: {{training.code}}
-        Duration: {{training.duration}}
-        Prereq: {{training.prereq_ids}}
+       <strong>Code:</strong>  {{training.code}}
+        <strong>Duration:</strong> {{training.duration}}
+        <strong>Prereq:</strong> {{training.prereq_ids}}
     </div>
 </div>
+
 <!-- Modal -->
 <div class="modal fade" id="exampleModal{{training.training_id}}" tabindex="-1"
     aria-labelledby="exampleModalLabel{{training.training_id}}" aria-hidden="true">
@@ -89,7 +90,7 @@
                     </div>
                     <div class="collapse" id="collapseExample{{astronaut.id}}-{{training.training_id}}">
                         <div class="card card-body">
-                            {{astronaut.nationality}}
+                           <strong>Nationality:</strong>  {{astronaut.nationality}} <strong>Birthday:</strong> {{astronaut.date_of_birth}} <strong>Rank:</strong> {{astronaut.rank}} <strong>Years of Experience:</strong>  {{astronaut.years_of_experience}}
                         </div>
                     </div>
                     {% endfor %}
