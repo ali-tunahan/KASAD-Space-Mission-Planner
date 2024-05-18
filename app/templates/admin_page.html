@@ -4,12 +4,14 @@
 <div class="container mt-5">
     <h2>Admin Dashboard</h2>
     <form method="POST">
-        <button name="expensive_mission" type="submit" class="btn btn-primary">Generate Most Expensive Mission Report</button>
-        <button name="mission_status" type="submit" class="btn btn-secondary">Generate Mission Status Report</button>
-        <button name="astronaut_utilization" type="submit" class="btn btn-success">Generate Astronaut Utilization Report</button>
-        <button name="financial_overview" type="submit" class="btn btn-info">Generate Financial Overview Report</button>
-       
-    </form>
+      <button name="expensive_mission" type="submit" class="btn btn-primary">Generate Most Expensive Mission Report</button>
+      <button name="mission_status" type="submit" class="btn btn-secondary">Generate Mission Status Report</button>
+      <button name="astronaut_utilization" type="submit" class="btn btn-success">Generate Astronaut Utilization Report</button>
+      <button name="financial_overview" type="submit" class="btn btn-info">Generate Financial Overview Report</button>
+      <!-- Delete all reports button -->
+      <button name="delete_reports" type="submit" class="btn btn-danger">Delete All Reports</button>
+  </form>
+  
     <hr>
     <h3>Reports</h3>
     {% for report in reports %}

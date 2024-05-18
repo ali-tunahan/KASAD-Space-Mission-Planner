@@ -30,6 +30,31 @@ def check_logged_in():
         return redirect(url_for('login'))
     return None
 
+def check_admin():
+    print(session.get('loggedin'))
+    if not session.get('loggedin'):
+        print("Not logged in")
+        return redirect(url_for('login'))
+
+    user_id = session.get('userid')
+    if user_id is None:
+        print("User ID not found")
+        return redirect(url_for('login'))
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("""
+        SELECT 1 FROM Admin WHERE id = %s;
+    """, (user_id,))
+    admin_exists = cursor.fetchone()
+
+    if admin_exists:
+        print("User is an admin")
+    else:
+        print("User is not an admin")
+        return redirect(url_for('login'))
+
+    return None
+
 def check_account_type():
     print(session.get('accounttype'))
     if not session.get('accounttype'):
@@ -520,15 +545,21 @@ def viewBids():
 @app.route("/admin_page", methods=["GET", "POST"])
 def admin():
     redirect_if_not_logged_in = check_logged_in()
-    redirect_if_not_admin = None # TODO check if admin
+    redirect_if_not_admin = check_admin()
     
     if redirect_if_not_logged_in or redirect_if_not_admin:
-        return redirect_if_not_logged_in
+        return redirect_if_not_admin
     
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    admin_id = get_user_id()
 
     if request.method == 'POST':
         
+            if 'delete_reports' in request.form:
+                cursor.execute("DELETE FROM SystemReport;")
+                mysql.connection.commit()
+            
             if 'expensive_mission' in request.form:
                 cursor.execute("""
                     INSERT INTO SystemReport (report_id, id, title, content) 
@@ -572,36 +603,47 @@ def admin():
                             CONCAT('Last Name: ', P.last_name),
                             CONCAT('Missions Assigned: ', AggData.MissionsCount),
                             CONCAT('Trainings Completed: ', AggData.TrainingsCount)
-                        )
+                        ) SEPARATOR ' | '
                     )
                     FROM Astronaut A
                     JOIN Person P ON A.id = P.id
                     LEFT JOIN (
-                        SELECT MA.bid_id, COUNT(DISTINCT MA.mission_id) as MissionsCount,
-                            COUNT(DISTINCT AT.training_id) as TrainingsCount
+                        SELECT MA.bid_id, COUNT(DISTINCT MA.mission_id) AS MissionsCount,
+                            COUNT(DISTINCT AT.training_id) AS TrainingsCount
                         FROM Mission_Accepted_Bid MA
                         LEFT JOIN Astronaut_Completes_Training AT ON MA.bid_id = AT.astronaut_id AND AT.status = 1
                         GROUP BY MA.bid_id
-                    ) AggData ON A.id = AggData.bid_id
-                    GROUP BY A.id;
+                    ) AggData ON A.id = AggData.bid_id;
                 """, (admin_id,))
+
 
             elif 'financial_overview' in request.form:
                 cursor.execute("""
                     INSERT INTO SystemReport (report_id, id, title, content)
                     SELECT UUID(), %s, 'Financial Overview', 
-                    CONCAT_WS(', ',
-                            CONCAT('Company Name: ', C.name),
-                            CONCAT('Total Bids: ', SUM(B.amount)),
-                            CONCAT('Number of Bids: ', COUNT(DISTINCT B.bid_id)),
-                            CONCAT('Transactions Amount: ', SUM(T.amount)),
-                            CONCAT('Number of Transactions: ', COUNT(DISTINCT T.transaction_id)))
-                    FROM Company C
-                    LEFT JOIN Bidder BD ON C.id = BD.id
-                    LEFT JOIN Bid B ON BD.id = B.bidder_id
-                    LEFT JOIN Transaction T ON BD.id = T.bidder_id
-                    GROUP BY C.id;
+                    GROUP_CONCAT(
+                        CONCAT_WS(', ',
+                            CONCAT('Company Name: ', CompanyDetails.name),
+                            CONCAT('Total Bids: ', CompanyDetails.TotalBids),
+                            CONCAT('Number of Bids: ', CompanyDetails.BidCount),
+                            CONCAT('Transactions Amount: ', CompanyDetails.TotalTransactions),
+                            CONCAT('Number of Transactions: ', CompanyDetails.TransactionCount)
+                        ) SEPARATOR ' | '
+                    )
+                    FROM (
+                        SELECT C.name,
+                            SUM(B.amount) AS TotalBids,
+                            COUNT(DISTINCT B.bid_id) AS BidCount,
+                            SUM(T.amount) AS TotalTransactions,
+                            COUNT(DISTINCT T.transaction_id) AS TransactionCount
+                        FROM Company C
+                        LEFT JOIN Bidder BD ON C.id = BD.id
+                        LEFT JOIN Bid B ON BD.id = B.bidder_id
+                        LEFT JOIN Transaction T ON BD.id = T.bidder_id
+                        GROUP BY C.id
+                    ) AS CompanyDetails;
                 """, (admin_id,))
+
             mysql.connection.commit()
         # except MySQLdb.IntegrityError as e:
         #     print(f"Error: {e}")
