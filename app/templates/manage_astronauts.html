@@ -23,7 +23,7 @@
   </div>
   <div class="offcanvas-body">
     <form action="/manage_astronauts" method="GET">
-      <div class="row g-2 m-2"> Birth Date</div>
+      <div class="row g-2 m-2"> Birth Date (YYYY-MM-DD)</div>
       <div class="row g-2">
         <div class="col-md">
           <div class="form-floating mb-3">
@@ -364,6 +364,9 @@
         modal.querySelector('[name="fname"]').value = data.first_name || '';
         modal.querySelector('[name="mname"]').value = data.middle_name || '';
         modal.querySelector('[name="lname"]').value = data.last_name || '';
+        modal.querySelector('[name="day"]').value = data.day_of_birth || '';
+        modal.querySelector('[name="month"]').value = data.month_of_birth || '';
+        modal.querySelector('[name="year"]').value = data.year_of_birth || '';
         modal.querySelector('[name="nationality"]').value = data.nationality || '';
         modal.querySelector('[name="rank"]').value = data.rank || '';
         modal.querySelector('[name="title"]').value = data.title || '';

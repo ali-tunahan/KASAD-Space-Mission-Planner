@@ -4,6 +4,8 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_mysqldb import MySQL
 import MySQLdb.cursors
 import uuid
+import datetime
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -240,6 +242,13 @@ def manageAstronauts():
                 ''', (astronaut_id, companyId))
                 astronaut_data = cursor.fetchone()
                 if astronaut_data:
+                    # Parse the date_of_birth into day, month, and year components
+                    date_of_birth = astronaut_data['date_of_birth']
+                    astronaut_data['day_of_birth'] = date_of_birth.day
+                    astronaut_data['month_of_birth'] = date_of_birth.month
+                    astronaut_data['year_of_birth'] = date_of_birth.year
+                    del astronaut_data['date_of_birth']
+
                     return jsonify(astronaut_data)
                 else:
                     return jsonify({'error': 'Astronaut not found'}), 404
@@ -251,12 +260,17 @@ def manageAstronauts():
             WHERE id=%s
             ''', (request.form.get('title'), request.form.get('fname'), request.form.get('mname'), request.form.get('lname'), astronaut_id))
 
+            day = min(max(int(request.form.get('day')), 1), 31)
+            month = min(max(int(request.form.get('month')), 1), 12)
+            year = min(max(int(request.form.get('year')), 1900), 2005)
+            date_of_birth = datetime(year, month, day).date()
+
             # Update the Astronaut table
             cursor.execute('''
                 UPDATE Astronaut
-                SET nationality=%s, rank=%s, years_of_experience=%s
+                SET nationality=%s, rank=%s, years_of_experience=%s, date_of_birth=%s
                 WHERE id=%s
-                ''', (request.form.get('nationality'), request.form.get('rank'), request.form.get('exp'), astronaut_id))
+                ''', (request.form.get('nationality'), request.form.get('rank'), request.form.get('exp'), date_of_birth, astronaut_id))
             mysql.connection.commit()
             return redirect(url_for('manageAstronauts'))
         elif request.method == "DELETE":
