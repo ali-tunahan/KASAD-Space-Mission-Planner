@@ -1,9 +1,12 @@
 import re
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_mysqldb import MySQL
 import MySQLdb.cursors
 import uuid
+from flask import Response
+
 
 app = Flask(__name__)
 
@@ -80,6 +83,7 @@ def register():
             random_uuid = uuid.uuid4()
             cursor.execute('INSERT INTO User (id, email, password) VALUES (%s, % s, % s)', (str(random_uuid), email, password,))
             mysql.connection.commit()
+            print("im here")
             
             if account_type == 'Astronaut':
                 title = request.form.get('title')
@@ -102,6 +106,7 @@ def register():
                 mysql.connection.commit()
 
             elif account_type == 'Company':
+                print("im here")
                 name = request.form.get('company_name')
                 street = request.form.get('street', '')
                 city = request.form.get('city')
@@ -196,42 +201,45 @@ def bidForMission():
 @app.route("/admin_page", methods=["GET", "POST"])
 def admin():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    report = None
-    report_type = None
-
     if request.method == 'POST':
         if 'expensive_mission' in request.form:
-            report_type = 'Most Expensive Missions'
-            cursor.execute("INSERT INTO SystemReport (id, title, content) SELECT ?, ?, CONCAT('Mission ID: ', mission_id, ', Payload Weight: ', payload_weight, ', Title: ', title) FROM Mission ORDER BY payload_weight DESC LIMIT 1;", (str(uuid.uuid4()), report_type))
+            cursor.execute("""
+                INSERT INTO SystemReport (report_id, title, content) 
+                SELECT UUID(), 'Most Expensive Missions', CONCAT('Mission ID: ', mission_id, ', Payload Weight: ', payload_weight, ', Title: ', title) 
+                FROM Mission 
+                ORDER BY payload_weight DESC 
+                LIMIT 1;
+            """)
             mysql.connection.commit()
 
         elif 'duplicate_missions' in request.form:
-            report_type = 'Duplicate Missions'
             cursor.execute("""
-                INSERT INTO SystemReport (id, title, content)
-                SELECT ?, ?, GROUP_CONCAT(CONCAT('Mission ID: ', mission_id))
+                INSERT INTO SystemReport (report_id, title, content)
+                SELECT UUID(), 'Duplicate Missions', GROUP_CONCAT(CONCAT('Mission ID: ', mission_id))
                 FROM (
-                    SELECT mission_id
+                    SELECT mission_id, title, description, launch_date
                     FROM Mission
                     GROUP BY title, description, launch_date
                     HAVING COUNT(*) > 1
-                ) AS Duplicates;
-            """, (str(uuid.uuid4()), report_type))
+                ) AS Duplicates
+                GROUP BY Duplicates.title, Duplicates.description, Duplicates.launch_date;
+
+            """)
             mysql.connection.commit()
 
-        # Retrieve the latest report
-        cursor.execute("""
-            SELECT content FROM SystemReport
-            WHERE title = ?
-            ORDER BY report_id DESC
-            LIMIT 1;
-        """, (report_type,))
-        report = cursor.fetchone()
-
+    # Retrieve the latest report for display
+    cursor.execute("SELECT report_id, title, content FROM SystemReport ")
+    reports = cursor.fetchall()
     cursor.close()
-
-
-    return render_template('admin_page.html', report=report, report_type=report_type)
+    return render_template('admin_page.html', reports=reports)
+@app.route("/download_report/<report_id>")
+def download_report(report_id):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT title, content FROM SystemReport WHERE report_id = %s", (report_id,))
+    report = cursor.fetchone()
+    cursor.close()
+    return Response(report['content'], mimetype="text/plain",
+                    headers={"Content-disposition": f"attachment; filename={report['title']}.txt"})
 
 
 
