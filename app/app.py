@@ -5,6 +5,8 @@ from flask_mysqldb import MySQL
 from datetime import datetime
 import MySQLdb.cursors
 import uuid
+from flask import Response
+
 
 app = Flask(__name__)
 
@@ -24,7 +26,24 @@ def check_logged_in():
         return redirect(url_for('login'))
     return None
 
+def check_account_type():
+    print(session.get('accounttype'))
+    if not session.get('accounttype'):
+        print("Not logged in")
+        return redirect(url_for('login'))
+    return session.get('accounttype')
 
+def company_pageguard():
+    type = check_account_type()
+    if(type == "company"):
+        return None
+    return redirect(url_for('login'))
+
+def astronaut_pageguard():
+    type = check_account_type()
+    if(type == "astronaut"):
+        return None
+    return redirect(url_for('login'))
 
 @app.route("/")
 @app.route("/main", methods=["GET", "POST"])
@@ -49,6 +68,16 @@ def login():
             session['loggedin'] = True
             session['userid'] = user['id']
             session['email'] = user['email']
+            cursor.execute('SELECT * FROM Company WHERE id = %s', (user['id'],))
+            company = cursor.fetchone()
+            cursor.execute('SELECT * FROM Astronaut WHERE id = %s', (user['id'],))
+            astronaut = cursor.fetchone()
+            if(company):
+                session['accounttype'] = 'company'
+            elif(astronaut):
+                session['accounttype'] = 'astronaut'
+            else:
+                session['accounttype'] = 'None'
             message = 'Logged in successfully!'
             return redirect(url_for('main'))
         else:
@@ -81,7 +110,6 @@ def register():
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT email FROM User WHERE email =  %s', (email,))
         
-
         account = cursor.fetchone()
 
         if account:
@@ -94,6 +122,7 @@ def register():
             random_uuid = uuid.uuid4()
             cursor.execute('INSERT INTO User (id, email, password) VALUES (%s, % s, % s)', (str(random_uuid), email, password,))
             mysql.connection.commit()
+            print("im here")
             
             if account_type == 'Astronaut':
                 title = request.form.get('title')
@@ -116,6 +145,7 @@ def register():
                 mysql.connection.commit()
 
             elif account_type == 'Company':
+                print("im here")
                 name = request.form.get('company_name')
                 street = request.form.get('street', '')
                 city = request.form.get('city')
@@ -157,7 +187,9 @@ def register():
 @app.route("/create_mission", methods=["GET", "POST"])
 def createMission():
     redirect_if_not_logged_in = check_logged_in()
-    if redirect_if_not_logged_in:
+    redirect_if_not_company = company_pageguard()
+    
+    if redirect_if_not_logged_in or redirect_if_not_company:
         return redirect_if_not_logged_in
     
     if request.method == "POST":
@@ -209,7 +241,9 @@ def logout():
 @app.route("/manage_astronauts", methods=["GET", "POST"])
 def manageAstronauts():
     redirect_if_not_logged_in = check_logged_in()
-    if redirect_if_not_logged_in:
+    redirect_if_not_company = company_pageguard()
+    
+    if redirect_if_not_logged_in or redirect_if_not_company:
         return redirect_if_not_logged_in
     # if 'loggedin' in session:
     #     if request.method == "GET":
@@ -246,14 +280,16 @@ def manageAstronauts():
 @app.route("/assign_trainings", methods=["GET", "POST"])
 def assignTrainings():
     redirect_if_not_logged_in = check_logged_in()
-    if redirect_if_not_logged_in:
+    redirect_if_not_company = company_pageguard()
+    
+    if redirect_if_not_logged_in or redirect_if_not_company:
         return redirect_if_not_logged_in
     
     if request.method == 'GET':
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT T.name, T.training_id, T.code, T.description, T.duration, IFNULL(GROUP_CONCAT(P.code), Null) AS prereq_ids FROM Training T LEFT JOIN Training_Prerequisite_Training ON training_id = train_id LEFT JOIN Training P ON P.training_id = prereq_id GROUP BY T.training_id')
         trainings = cursor.fetchall()   
-        cursor.execute('SELECT * FROM Astronaut')
+        cursor.execute('SELECT * FROM Astronaut A, Person P,Company C WHERE A.id=P.id AND A.company_id=C.id')
         astronauts = cursor.fetchall()
         return render_template("assign_trainings.html", trainings=trainings, astronauts=astronauts)
     else:
@@ -277,12 +313,17 @@ def assignTrainings():
                     cursor.execute('INSERT INTO Astronaut_Completes_Training (astronaut_id, training_id, status) VALUES (%s, %s, 0)', (astronaut_id, training_id))
                     mysql.connection.commit()
                 else:
-                    astronauts_cant_take.append(astronaut_id)
-            
+                    cursor.execute('SELECT * FROM Person WHERE id = %s', (astronaut_id,))
+                    astro_name_result = cursor.fetchone()
+                    astro_name = astro_name_result['first_name'] +' '+astro_name_result['middle_name'] +' '+ astro_name_result['last_name']
+                    astronauts_cant_take.append(astro_name)
+            cursor.execute('SELECT name FROM Training WHERE training_id = %s', (training_id,))
+            training_name_result = cursor.fetchone()
+            training_name = training_name_result['name']
             if not astronauts_cant_take:
-                flash(f'All selected astronauts have been assigned to training {training_id}', 'success')
+                flash(f'All selected astronauts have been assigned to training {training_name}', 'success')
             else:
-                flash(f'Astronauts {", ".join(astronauts_cant_take)} can not be assigned', 'danger')
+                flash(f'Astronaut(s) {", ".join(astronauts_cant_take)} can not be assigned', 'danger')
 
         except Exception as e:
             print("Error executing SQL query:", e)
@@ -292,7 +333,9 @@ def assignTrainings():
 @app.route("/bid_for_mission", methods=["GET", "POST"])
 def bidForMission():
     redirect_if_not_logged_in = check_logged_in()
-    if redirect_if_not_logged_in:
+    redirect_if_not_company = company_pageguard()
+    
+    if redirect_if_not_logged_in or redirect_if_not_company:
         return redirect_if_not_logged_in
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -328,6 +371,12 @@ def bidForMission():
 
 @app.route("/view_bids", methods=["GET", "POST"])
 def viewBids():
+    redirect_if_not_logged_in = check_logged_in()
+    redirect_if_not_company = company_pageguard()
+    
+    if redirect_if_not_logged_in or redirect_if_not_company:
+        return redirect_if_not_logged_in
+    
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
     if request.method == "POST":
@@ -357,45 +406,51 @@ def viewBids():
 @app.route("/admin_page", methods=["GET", "POST"])
 def admin():
     redirect_if_not_logged_in = check_logged_in()
-    if redirect_if_not_logged_in:
+    redirect_if_not_admin = None # TODO check if admin
+    
+    if redirect_if_not_logged_in or redirect_if_not_admin:
         return redirect_if_not_logged_in
+    
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    report = None
-    report_type = None
-
     if request.method == 'POST':
         if 'expensive_mission' in request.form:
-            report_type = 'Most Expensive Missions'
-            cursor.execute("INSERT INTO SystemReport (id, title, content) SELECT ?, ?, CONCAT('Mission ID: ', mission_id, ', Payload Weight: ', payload_weight, ', Title: ', title) FROM Mission ORDER BY payload_weight DESC LIMIT 1;", (str(uuid.uuid4()), report_type))
+            cursor.execute("""
+                INSERT INTO SystemReport (report_id, title, content) 
+                SELECT UUID(), 'Most Expensive Missions', CONCAT('Mission ID: ', mission_id, ', Payload Weight: ', payload_weight, ', Title: ', title) 
+                FROM Mission 
+                ORDER BY payload_weight DESC 
+                LIMIT 1;
+            """)
             mysql.connection.commit()
 
         elif 'duplicate_missions' in request.form:
-            report_type = 'Duplicate Missions'
             cursor.execute("""
-                INSERT INTO SystemReport (id, title, content)
-                SELECT ?, ?, GROUP_CONCAT(CONCAT('Mission ID: ', mission_id))
+                INSERT INTO SystemReport (report_id, title, content)
+                SELECT UUID(), 'Duplicate Missions', GROUP_CONCAT(CONCAT('Mission ID: ', mission_id))
                 FROM (
-                    SELECT mission_id
+                    SELECT mission_id, title, description, launch_date
                     FROM Mission
                     GROUP BY title, description, launch_date
                     HAVING COUNT(*) > 1
-                ) AS Duplicates;
-            """, (str(uuid.uuid4()), report_type))
+                ) AS Duplicates
+                GROUP BY Duplicates.title, Duplicates.description, Duplicates.launch_date;
+
+            """)
             mysql.connection.commit()
 
-        # Retrieve the latest report
-        cursor.execute("""
-            SELECT content FROM SystemReport
-            WHERE title = ?
-            ORDER BY report_id DESC
-            LIMIT 1;
-        """, (report_type,))
-        report = cursor.fetchone()
-
+    # Retrieve the latest report for display
+    cursor.execute("SELECT report_id, title, content FROM SystemReport ")
+    reports = cursor.fetchall()
     cursor.close()
-
-
-    return render_template('admin_page.html', report=report, report_type=report_type)
+    return render_template('admin_page.html', reports=reports)
+@app.route("/download_report/<report_id>")
+def download_report(report_id):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT title, content FROM SystemReport WHERE report_id = %s", (report_id,))
+    report = cursor.fetchone()
+    cursor.close()
+    return Response(report['content'], mimetype="text/plain",
+                    headers={"Content-disposition": f"attachment; filename={report['title']}.txt"})
 
 
 @app.errorhandler(404)

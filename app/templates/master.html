@@ -16,9 +16,13 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
+        {% if session.get('accounttype') == 'astronaut'  %}
+          <li class="nav-item">
           <a class="nav-link active" aria-current="page" href="#">Dashboard</a>
         </li>
+        {% endif %}
+        
+        {% if session.get('accounttype') == 'company' %}
         <li class="nav-item">
           <a class="nav-link" href="/create_mission">Create A Space Mission</a>
         </li>
@@ -34,11 +38,12 @@
           >
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/logout"
           <a class="nav-link" href="/view_bids"
             >View Bids</a
           >
         </li>
+        {% endif %}
+        
         <li class="nav-item">
           <a class="nav-link" href="/login"
             >Logout</a
