@@ -17,9 +17,22 @@ app.config["MYSQL_DB"] = "DASAK"
 
 mysql = MySQL(app)
 
+def check_logged_in():
+    print(session.get('loggedin'))
+    if not session.get('loggedin'):
+        print("Not logged in")
+        return redirect(url_for('login'))
+    return None
+
+
+
 @app.route("/")
 @app.route("/main", methods=["GET", "POST"])
 def main():
+    redirect_if_not_logged_in = check_logged_in()
+    if redirect_if_not_logged_in:
+        return redirect_if_not_logged_in
+    
     message = "CU"
     return render_template("main.html", message=message)
 
@@ -143,6 +156,10 @@ def register():
 
 @app.route("/create_mission", methods=["GET", "POST"])
 def createMission():
+    redirect_if_not_logged_in = check_logged_in()
+    if redirect_if_not_logged_in:
+        return redirect_if_not_logged_in
+    
     if request.method == "POST":
         # Extract data from form
         title = request.form.get('title')
@@ -178,11 +195,22 @@ def createMission():
         except Exception as e:
             print("Error executing SQL query:", e)
             return render_template("create_mission.html")
-
     return render_template("create_mission.html")
+
+@app.route('/logout')
+def logout():
+    """Log out the user by clearing the session and redirecting to the login page."""
+    session.pop('loggedin', None)  # Remove 'loggedin' from session
+    session.pop('userid', None)    # Optional: clear other session variables
+    session.pop('email', None)     # Optional: clear other session variables
+    return redirect(url_for('login'))
+
 
 @app.route("/manage_astronauts", methods=["GET", "POST"])
 def manageAstronauts():
+    redirect_if_not_logged_in = check_logged_in()
+    if redirect_if_not_logged_in:
+        return redirect_if_not_logged_in
     # if 'loggedin' in session:
     #     if request.method == "GET":
     #         companyId = session['userid']
@@ -217,6 +245,10 @@ def manageAstronauts():
     return render_template("manage_astronauts.html")
 @app.route("/assign_trainings", methods=["GET", "POST"])
 def assignTrainings():
+    redirect_if_not_logged_in = check_logged_in()
+    if redirect_if_not_logged_in:
+        return redirect_if_not_logged_in
+    
     if request.method == 'GET':
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT T.name, T.training_id, T.code, T.description, T.duration, IFNULL(GROUP_CONCAT(P.code), Null) AS prereq_ids FROM Training T LEFT JOIN Training_Prerequisite_Training ON training_id = train_id LEFT JOIN Training P ON P.training_id = prereq_id GROUP BY T.training_id')
@@ -259,6 +291,10 @@ def assignTrainings():
         return redirect(url_for('assignTrainings'))  # Redirect to the same page after processing
 @app.route("/bid_for_mission", methods=["GET", "POST"])
 def bidForMission():
+    redirect_if_not_logged_in = check_logged_in()
+    if redirect_if_not_logged_in:
+        return redirect_if_not_logged_in
+
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     if request.method == "GET":
         cursor.execute("SELECT * FROM Mission")
@@ -318,9 +354,11 @@ def viewBids():
     bids = cursor.fetchall()
     return render_template("view_bids.html", bids=bids)
 
-
 @app.route("/admin_page", methods=["GET", "POST"])
 def admin():
+    redirect_if_not_logged_in = check_logged_in()
+    if redirect_if_not_logged_in:
+        return redirect_if_not_logged_in
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     report = None
     report_type = None
@@ -360,6 +398,10 @@ def admin():
     return render_template('admin_page.html', report=report, report_type=report_type)
 
 
+@app.errorhandler(404)
+def page_not_found(e):
+    # Note 'e' is the error object
+    return render_template('error_page.html'), 404
 
 
 
