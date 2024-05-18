@@ -1,0 +1,65 @@
+{% extends "master.html" %} {% block title %} Astronaut Dashboard {% endblock %}
+{% block content %}
+
+<style></style>
+
+<div class="container mt-4">
+  <h1 class="mb-4">Astronaut Dashboard</h1>
+
+  <div class="row">
+    <div class="col-md-4">
+      <h2>Trainings</h2>
+      {% if current_trainings %}
+      <ul class="list-group">
+        {% for training in current_trainings %}
+        <li class="list-group-item">
+          {{ training.name }} -
+          <strong>Status:</strong> {{ 'In Progress' if training.status != 100
+          else 'Complete' }}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="">
+        <p>No current trainings.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="col-md-4">
+      <h2>Upcoming Missions</h2>
+      {% if upcoming_missions %}
+      <ul class="list-group">
+        {% for mission in upcoming_missions %}
+        <li class="list-group-item">
+          {{ mission.title }} - <strong>Starts:</strong>
+          {{mission.launch_date}}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="fixed-height-list empty">
+        <p>No upcoming missions.</p>
+      </div>
+      {% endif %}
+    </div>
+    <div class="col-md-4">
+      <h2>Past Missions</h2>
+      {% if past_missions %}
+      <ul class="list-group">
+        {% for mission in past_missions %}
+        <li class="list-group-item">
+          {{ mission.title }} - <strong>Duration:</strong> {{ mission.duration
+          }} days
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="">
+        <p>No past missions.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,4 +1,11 @@
-{% extends "base.html" %} {% block content%}
+{% extends "base.html" %} {% block content %}
+
+<style>
+  .alert {
+    font-size: 10px;
+    color: red;
+  }
+</style>
 
 <div class="container-fluid">
   <div class="row vh-100">
@@ -37,6 +44,11 @@
                 required
               />
             </div>
+            <!-- Flash messages display -->
+            {% with messages = get_flashed_messages(with_categories=true) %} {%
+            if messages %} {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %} {% endif %} {% endwith %}
             <button type="submit" class="btn btn-primary w-100">Login</button>
           </form>
           <div class="text-center mt-3">
@@ -50,5 +62,4 @@
     </div>
   </div>
 </div>
-
 {% endblock %}
