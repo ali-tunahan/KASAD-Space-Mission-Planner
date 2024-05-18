@@ -317,7 +317,7 @@ INSERT INTO Person (id, title, first_name, middle_name, last_name) VALUES
 ('77777777-7777-7777-7777-777777777777', 'Mr.', 'Gnour', 'The', 'Devourer'),
 ('88888888-8888-8888-8888-888888888888', 'Dr.', 'Ati', 'Tunahan', 'Zilla'),
 ('99999999-9999-9999-9999-999999999999', 'Av.', 'Serhan', 'Bayri', 'Domuzu'),
-('11111111-1111-1111-1111-222222222222', 'Prof. Dr.', 'Ibrahim', '', 'Saracoglu');
+('11111111-1111-1111-1111-222222222222', 'Prof. Dr.', 'Ibrahim', 'Mustafa', 'Saracoglu');
 
 
 INSERT INTO Admin (id, assigned_region) VALUES
