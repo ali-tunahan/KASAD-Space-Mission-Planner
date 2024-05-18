@@ -2,22 +2,26 @@
 {% block title%} {% endblock %}
 
 {% block content%}
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for msg in messages %}
-            <p>{{msg}}</p>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}            
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<ul class=flashes>
+    {% for category, message in messages %}
+    <div class="alert alert-{{category}} alert-dismissible fade show" role="alert">
+        <strong>{{message}}</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endwith %}
 <h1>ASSIGN TRAINING</h1>
 <style>
     /* Custom CSS to change text color to black */
     .collapse .card-body,
-    .modal-body{
+    .modal-body {
         color: black;
     }
 </style>
-
 {%for training in trainings%}
 <div class="card w-51 mb-3">
     <div class="card-body d-flex justify-content-between align-items-center">
@@ -26,12 +30,14 @@
             <p class="card-text">{{training.description}}</p>
         </div>
         <div>
-            <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample{{training.training_id}}"
-                aria-expanded="false" aria-controls="collapseExample{{training.training_id}}">
+            <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseExample{{training.training_id}}" aria-expanded="false"
+                aria-controls="collapseExample{{training.training_id}}">
                 Details
             </button>
             <!-- Button trigger modal -->
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal{{training.training_id}}">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                data-bs-target="#exampleModal{{training.training_id}}">
                 Assign
             </button>
         </div>
@@ -46,40 +52,48 @@
     </div>
 </div>
 <!-- Modal -->
-<div class="modal fade" id="exampleModal{{training.training_id}}" tabindex="-1" aria-labelledby="exampleModalLabel{{training.training_id}}" aria-hidden="true">
+<div class="modal fade" id="exampleModal{{training.training_id}}" tabindex="-1"
+    aria-labelledby="exampleModalLabel{{training.training_id}}" aria-hidden="true">
     <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="exampleModalLabel{{training.training_id}}" style="color: black;">Astronauts</h1>
+                <h1 class="modal-title fs-5" id="exampleModalLabel{{training.training_id}}" style="color: black;">
+                    Astronauts</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form method="POST" action="/assign_trainings">
-                {%for astronaut in astronauts%}
-                <div class="card w-51 mb-3">
-                    <div class="btn-group" role="group" aria-label="Basic checkbox toggle button group">
-                        <div class="card-body d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="card-title">{{astronaut.id}}</h5>
-                                <p class="card-text">{{astronaut.company_id}}</p>
+                    {%for astronaut in astronauts%}
+                    <div class="card w-51 mb-3">
+                        <div class="btn-group" role="group" aria-label="Basic checkbox toggle button group">
+                            <div class="card-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="card-title">{{astronaut.first_name}} {{astronaut.middle_name}} {{astronaut.last_name}}</h5>
+                                    <p class="card-text">{{astronaut.name}}</p>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <button class="btn btn-primary me-2" type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#collapseExample{{astronaut.id}}-{{training.training_id}}"
+                                        aria-expanded="false"
+                                        aria-controls="collapseExample{{astronaut.id}}-{{training.training_id}}">
+                                        Details
+                                    </button>
+                                    <input type="checkbox" name="selected_ids" value="{{astronaut.id}}" class="btn-check"
+                                        id="btncheck{{astronaut.id}}-{{training.training_id}}" autocomplete="off">
+                                    <label class="btn btn-outline-primary"
+                                        for="btncheck{{astronaut.id}}-{{training.training_id}}">Assign</label>
+                                </div>
                             </div>
-                            <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#collapseExample{{astronaut.id}}-{{training.training_id}}" aria-expanded="false"
-                                aria-controls="collapseExample{{astronaut.id}}-{{training.training_id}}">
-                                Details
-                            </button>
-                            <input type="checkbox" name="selected_ids" value="{{astronaut.id}}" class="btn-check" id="btncheck{{astronaut.id}}-{{training.training_id}}" autocomplete="off">
-                            <label class="btn btn-outline-primary" for="btncheck{{astronaut.id}}-{{training.training_id}}">Assign</label>
+                        </div>
+                        
+                    </div>
+                    <div class="collapse" id="collapseExample{{astronaut.id}}-{{training.training_id}}">
+                        <div class="card card-body">
+                            {{astronaut.nationality}}
                         </div>
                     </div>
-                </div>
-                <div class="collapse" id="collapseExample{{astronaut.id}}-{{training.training_id}}">
-                    <div class="card card-body">
-                        {{astronaut.nationality}}
-                    </div>
-                </div>
-                {% endfor %}
-                <input type="hidden" name="training_id" value="{{training.training_id}}">
+                    {% endfor %}
+                    <input type="hidden" name="training_id" value="{{training.training_id}}">
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

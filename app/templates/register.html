@@ -256,7 +256,7 @@
       </div>
     </div>
 
-    <button type="submit" class="btn btn-primary">Register</button>
+    <button type="submit" method="post" class="btn btn-primary">Register</button>
   </form>
   <div class="text-center mt-3">
     <p>Already have an account? <a href="/login">Login</a></p>
@@ -307,12 +307,15 @@
     //TODO - IF MORE NEEDS TO BE REQUIRED THIS WILL BE ALTERED
 
     const astronautInputFields = document.querySelectorAll(
-      "#astronautFields input"
+      "#astronautFields input, #companySelect"
     );
 
     const companyInputFields = document.querySelectorAll(
       "#companyFields input"
     );
+
+    const bidderChecked = document.getElementById("bidderRole").checked;
+    const employerChecked = document.getElementById("employerRole").checked;
 
     astronautInputFields.forEach((field) => {
       if (accountType === "Astronaut" && field.id !== "middleNameInput") {
@@ -330,10 +333,46 @@
       }
     });
 
+    //if employer is not selected, we remove the required attribute from the employer fields
+    if (!employerChecked) {
+      const employerInputFields = document.querySelectorAll(
+        "#employerFields input"
+      );
+      employerInputFields.forEach((field) => {
+        field.required = false;
+      });
+    }
+    else{
+      const employerInputFields = document.querySelectorAll(
+        "#employerFields input"
+      );
+      employerInputFields.forEach((field) => {
+        field.required = true;
+      });
+    }
+    //if employer is selected, we remove the required attribute from the bidder fields
+    if (!bidderChecked) {
+      const bidderInputFields = document.querySelectorAll(
+        "#bidderFields input"
+      );
+      bidderInputFields.forEach((field) => {
+        field.required = false;
+      });
+    }
+    else{
+      const bidderInputFields = document.querySelectorAll(
+        "#bidderFields input"
+      );
+      bidderInputFields.forEach((field) => {
+        field.required = true;
+      });
+    }
+
     // Show relevant fields based on account type
     if (accountType === "Astronaut") {
       document.getElementById("astronautFields").classList.remove("d-none");
     } else if (accountType === "Company") {
+      
       document.getElementById("companyFields").classList.remove("d-none");
     }
   }

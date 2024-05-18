@@ -5,6 +5,8 @@ from flask_mysqldb import MySQL
 from datetime import datetime
 import MySQLdb.cursors
 import uuid
+from flask import Response
+
 
 app = Flask(__name__)
 
@@ -128,6 +130,7 @@ def register():
             random_uuid = uuid.uuid4()
             cursor.execute('INSERT INTO User (id, email, password) VALUES (%s, % s, % s)', (str(random_uuid), email, password,))
             mysql.connection.commit()
+            print("im here")
             
             if account_type == 'Astronaut':
                 title = request.form.get('title')
@@ -150,6 +153,7 @@ def register():
                 mysql.connection.commit()
 
             elif account_type == 'Company':
+                print("im here")
                 name = request.form.get('company_name')
                 street = request.form.get('street', '')
                 city = request.form.get('city')
@@ -293,7 +297,7 @@ def assignTrainings():
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT T.name, T.training_id, T.code, T.description, T.duration, IFNULL(GROUP_CONCAT(P.code), Null) AS prereq_ids FROM Training T LEFT JOIN Training_Prerequisite_Training ON training_id = train_id LEFT JOIN Training P ON P.training_id = prereq_id GROUP BY T.training_id')
         trainings = cursor.fetchall()   
-        cursor.execute('SELECT * FROM Astronaut')
+        cursor.execute('SELECT * FROM Astronaut A, Person P,Company C WHERE A.id=P.id AND A.company_id=C.id')
         astronauts = cursor.fetchall()
         return render_template("assign_trainings.html", trainings=trainings, astronauts=astronauts)
     else:
@@ -317,12 +321,17 @@ def assignTrainings():
                     cursor.execute('INSERT INTO Astronaut_Completes_Training (astronaut_id, training_id, status) VALUES (%s, %s, 0)', (astronaut_id, training_id))
                     mysql.connection.commit()
                 else:
-                    astronauts_cant_take.append(astronaut_id)
-            
+                    cursor.execute('SELECT * FROM Person WHERE id = %s', (astronaut_id,))
+                    astro_name_result = cursor.fetchone()
+                    astro_name = astro_name_result['first_name'] +' '+astro_name_result['middle_name'] +' '+ astro_name_result['last_name']
+                    astronauts_cant_take.append(astro_name)
+            cursor.execute('SELECT name FROM Training WHERE training_id = %s', (training_id,))
+            training_name_result = cursor.fetchone()
+            training_name = training_name_result['name']
             if not astronauts_cant_take:
-                flash(f'All selected astronauts have been assigned to training {training_id}', 'info')
+                flash(f'All selected astronauts have been assigned to training {training_name}', 'success')
             else:
-                flash(f'Astronauts {", ".join(astronauts_cant_take)} can not be assigned', 'alert')
+                flash(f'Astronaut(s) {", ".join(astronauts_cant_take)} can not be assigned', 'danger')
 
         except Exception as e:
             print("Error executing SQL query:", e)
@@ -411,42 +420,45 @@ def admin():
         return redirect_if_not_logged_in
     
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    report = None
-    report_type = None
-
     if request.method == 'POST':
         if 'expensive_mission' in request.form:
-            report_type = 'Most Expensive Missions'
-            cursor.execute("INSERT INTO SystemReport (id, title, content) SELECT ?, ?, CONCAT('Mission ID: ', mission_id, ', Payload Weight: ', payload_weight, ', Title: ', title) FROM Mission ORDER BY payload_weight DESC LIMIT 1;", (str(uuid.uuid4()), report_type))
+            cursor.execute("""
+                INSERT INTO SystemReport (report_id, title, content) 
+                SELECT UUID(), 'Most Expensive Missions', CONCAT('Mission ID: ', mission_id, ', Payload Weight: ', payload_weight, ', Title: ', title) 
+                FROM Mission 
+                ORDER BY payload_weight DESC 
+                LIMIT 1;
+            """)
             mysql.connection.commit()
 
         elif 'duplicate_missions' in request.form:
-            report_type = 'Duplicate Missions'
             cursor.execute("""
-                INSERT INTO SystemReport (id, title, content)
-                SELECT ?, ?, GROUP_CONCAT(CONCAT('Mission ID: ', mission_id))
+                INSERT INTO SystemReport (report_id, title, content)
+                SELECT UUID(), 'Duplicate Missions', GROUP_CONCAT(CONCAT('Mission ID: ', mission_id))
                 FROM (
-                    SELECT mission_id
+                    SELECT mission_id, title, description, launch_date
                     FROM Mission
                     GROUP BY title, description, launch_date
                     HAVING COUNT(*) > 1
-                ) AS Duplicates;
-            """, (str(uuid.uuid4()), report_type))
+                ) AS Duplicates
+                GROUP BY Duplicates.title, Duplicates.description, Duplicates.launch_date;
+
+            """)
             mysql.connection.commit()
 
-        # Retrieve the latest report
-        cursor.execute("""
-            SELECT content FROM SystemReport
-            WHERE title = ?
-            ORDER BY report_id DESC
-            LIMIT 1;
-        """, (report_type,))
-        report = cursor.fetchone()
-
+    # Retrieve the latest report for display
+    cursor.execute("SELECT report_id, title, content FROM SystemReport ")
+    reports = cursor.fetchall()
     cursor.close()
-
-
-    return render_template('admin_page.html', report=report, report_type=report_type)
+    return render_template('admin_page.html', reports=reports)
+@app.route("/download_report/<report_id>")
+def download_report(report_id):
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT title, content FROM SystemReport WHERE report_id = %s", (report_id,))
+    report = cursor.fetchone()
+    cursor.close()
+    return Response(report['content'], mimetype="text/plain",
+                    headers={"Content-disposition": f"attachment; filename={report['title']}.txt"})
 
 @app.route('/dashboard')
 def dashboard():
