@@ -2,11 +2,8 @@ import re
 import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_mysqldb import MySQL
-<<<<<<< HEAD
-=======
 from flask import Response
 from datetime import datetime
->>>>>>> main
 import MySQLdb.cursors
 import uuid
 import datetime
@@ -26,8 +23,6 @@ app.debug = True
 
 mysql = MySQL(app)
 
-<<<<<<< HEAD
-=======
 def check_logged_in():
     print(session.get('loggedin'))
     if not session.get('loggedin'):
@@ -62,7 +57,6 @@ def get_user_id():
     return user_id
     
 
->>>>>>> main
 @app.route("/")
 @app.route("/main", methods=["GET", "POST"])
 def main():
@@ -200,52 +194,6 @@ def register():
 
 @app.route("/create_mission", methods=["GET", "POST"])
 def createMission():
-<<<<<<< HEAD
-    return render_template("create_mission.html")
-
-@app.route("/manage_astronauts", methods=["GET", "POST"])
-def manageAstronauts():
-    # if 'loggedin' in session:
-    #     if request.method == "GET":
-    #         companyId = session['userid']
-    #         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    #         #Filters are not included in the query rn. Needs to be implemented
-    #         cursor.execute('''
-    #             SELECT 
-    #             A.id AS astronaut_id,
-    #             P.title,
-    #             P.first_name,
-    #             P.middle_name,
-    #             P.last_name,
-    #             (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
-    #             JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
-    #             JOIN Mission M ON MAB.mission_id = M.mission_id
-    #             WHERE BHA.id = A.id
-    #             AND A.company_id = %s
-    #             AND (M.launch_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) OR DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE())
-    #             ) AS filtered_missions_count,
-    #             (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
-    #             JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
-    #             JOIN Mission M ON MAB.mission_id = M.mission_id
-    #             WHERE BHA.id = A.id AND A.company_id = @company_id 
-    #             AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
-    #             ) AS total_missions_count
-    #             FROM Astronaut A NATURAL JOIN Person P
-    #             WHERE
-    #             A.company_id = %s ''', (companyId, companyId, ))
-    #         astronauts = cursor.fetchall()
-    #         return render_template("manage_astronauts.html", astronauts = astronauts)
-    #return render_template("manage_astronauts.html", astronauts = astronauts)
-    return render_template("manage_astronauts.html")
-@app.route("/assign_trainings", methods=["GET", "POST"])
-def assignTrainings():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute('SELECT name, training_id, code, description, duration, IFNULL(GROUP_CONCAT(prereq_id), Null) AS prereq_ids FROM Training LEFT JOIN Training_Prerequisite_Training ON training_id = train_id GROUP BY training_id')
-    trainings = cursor.fetchall()   
-    cursor.execute('SELECT * FROM Astronaut')
-    astronauts = cursor.fetchall()
-    return render_template("assign_trainings.html", trainings = trainings,astronauts=astronauts)
-=======
     redirect_if_not_logged_in = check_logged_in()
     redirect_if_not_company = company_pageguard()
     
@@ -460,32 +408,29 @@ def assignTrainings():
     else:
         training_id = request.form['training_id']
         selected_ids = request.form.getlist('selected_ids')
->>>>>>> main
 
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        try:
+            astronauts_cant_take = []
+            for astronaut_id in selected_ids:
+                # Check if the astronaut has completed all prerequisite trainings
+                cursor.execute('SELECT prereq_id FROM Training_Prerequisite_Training WHERE train_id = %s', (training_id,))
+                prerequisite_trainings = cursor.fetchall()
 
-<<<<<<< HEAD
-@app.route("/bid_for_mission", methods=["GET", "POST"])
-def bidForMission():
-
-    return render_template("bid_for_mission.html")
-
-@app.route("/admin_page", methods=["GET", "POST"])
-def admin():
-    admin_id = session['userid']  # Assuming the admin's user ID is stored in session
-=======
                 cursor.execute('SELECT training_id FROM Astronaut_Completes_Training WHERE astronaut_id = %s AND status = 1', (astronaut_id,))
                 completed_trainings = [row['training_id'] for row in cursor.fetchall()]
                 cursor.execute('SELECT training_id FROM Astronaut_Completes_Training WHERE astronaut_id = %s', (astronaut_id,))
                 completed_or_not_completed_trainings = [row['training_id'] for row in cursor.fetchall()]
 
-                if all(prereq['prereq_id'] in completed_trainings for prereq in prerequisite_trainings) and training_id not in completed_or_not_completed_trainings:
-                    cursor.execute('INSERT INTO Astronaut_Completes_Training (astronaut_id, training_id, status) VALUES (%s, %s, 0)', (astronaut_id, training_id))
-                    mysql.connection.commit()
-                else:
-                    cursor.execute('SELECT * FROM Person WHERE id = %s', (astronaut_id,))
-                    astro_name_result = cursor.fetchone()
-                    astro_name = astro_name_result['first_name'] +' '+astro_name_result['middle_name'] +' '+ astro_name_result['last_name']
-                    astronauts_cant_take.append(astro_name)
+
+            if all(prereq['prereq_id'] in completed_trainings for prereq in prerequisite_trainings) and training_id not in completed_or_not_completed_trainings:
+                cursor.execute('INSERT INTO Astronaut_Completes_Training (astronaut_id, training_id, status) VALUES (%s, %s, 0)', (astronaut_id, training_id))
+                mysql.connection.commit()
+            else:
+                cursor.execute('SELECT * FROM Person WHERE id = %s', (astronaut_id,))
+                astro_name_result = cursor.fetchone()
+                astro_name = astro_name_result['first_name'] +' '+astro_name_result['middle_name'] +' '+ astro_name_result['last_name']
+                astronauts_cant_take.append(astro_name)
             cursor.execute('SELECT name FROM Training WHERE training_id = %s', (training_id,))
             training_name_result = cursor.fetchone()
             training_name = training_name_result['name']
@@ -580,7 +525,6 @@ def admin():
     if redirect_if_not_logged_in or redirect_if_not_admin:
         return redirect_if_not_logged_in
     
->>>>>>> main
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
     if request.method == 'POST':
