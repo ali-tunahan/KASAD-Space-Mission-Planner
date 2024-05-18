@@ -2,7 +2,6 @@ import re
 import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_mysqldb import MySQL
-from datetime import datetime
 import MySQLdb.cursors
 import uuid
 from flask import Response
@@ -19,22 +18,9 @@ app.config["MYSQL_DB"] = "DASAK"
 
 mysql = MySQL(app)
 
-def check_logged_in():
-    print(session.get('loggedin'))
-    if not session.get('loggedin'):
-        print("Not logged in")
-        return redirect(url_for('login'))
-    return None
-
-
-
 @app.route("/")
 @app.route("/main", methods=["GET", "POST"])
 def main():
-    redirect_if_not_logged_in = check_logged_in()
-    if redirect_if_not_logged_in:
-        return redirect_if_not_logged_in
-    
     message = "CU"
     return render_template("main.html", message=message)
 
@@ -160,61 +146,10 @@ def register():
 
 @app.route("/create_mission", methods=["GET", "POST"])
 def createMission():
-    redirect_if_not_logged_in = check_logged_in()
-    if redirect_if_not_logged_in:
-        return redirect_if_not_logged_in
-    
-    if request.method == "POST":
-        # Extract data from form
-        title = request.form.get('title')
-        description = request.form.get('description')
-        objectives = request.form.get('objectives')
-        launch_date = request.form.get('launch_date')
-        duration = request.form.get('duration')
-        num_of_astronauts = request.form.get('num_of_astronauts')
-        payload_volume = request.form.get('payload_volume')
-        payload_weight = request.form.get('payload_weight')
-        
-        # Data validation
-        if not title or not description or not objectives or not launch_date or not duration or not num_of_astronauts or not payload_volume or not payload_weight:
-            flash("Fill all the necessary fields.", 'error')
-            return render_template("create_mission.html")
-        
-        # Check date is in the future
-        if datetime.strptime(launch_date, '%Y-%m-%d') < datetime.now():
-            flash("Launch date must be in the future.", 'error')
-            return render_template("create_mission.html")
-
-        # Insert data into the database
-        try:
-            cursor = mysql.connection.cursor()
-            cursor.execute('''
-                INSERT INTO Mission (mission_id, employer_id, title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ''', (uuid.uuid4().hex, session.get('company_id'), title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight))
-            mysql.connection.commit()
-            flash("Mission created successfully!", 'success')
-            return redirect(url_for('main'))  # Redirect to the main page or a confirmation page
-        
-        except Exception as e:
-            print("Error executing SQL query:", e)
-            return render_template("create_mission.html")
     return render_template("create_mission.html")
-
-@app.route('/logout')
-def logout():
-    """Log out the user by clearing the session and redirecting to the login page."""
-    session.pop('loggedin', None)  # Remove 'loggedin' from session
-    session.pop('userid', None)    # Optional: clear other session variables
-    session.pop('email', None)     # Optional: clear other session variables
-    return redirect(url_for('login'))
-
 
 @app.route("/manage_astronauts", methods=["GET", "POST"])
 def manageAstronauts():
-    redirect_if_not_logged_in = check_logged_in()
-    if redirect_if_not_logged_in:
-        return redirect_if_not_logged_in
     # if 'loggedin' in session:
     #     if request.method == "GET":
     #         companyId = session['userid']
@@ -249,152 +184,114 @@ def manageAstronauts():
     return render_template("manage_astronauts.html")
 @app.route("/assign_trainings", methods=["GET", "POST"])
 def assignTrainings():
-    redirect_if_not_logged_in = check_logged_in()
-    if redirect_if_not_logged_in:
-        return redirect_if_not_logged_in
-    
-    if request.method == 'GET':
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        cursor.execute('SELECT T.name, T.training_id, T.code, T.description, T.duration, IFNULL(GROUP_CONCAT(P.code), Null) AS prereq_ids FROM Training T LEFT JOIN Training_Prerequisite_Training ON training_id = train_id LEFT JOIN Training P ON P.training_id = prereq_id GROUP BY T.training_id')
-        trainings = cursor.fetchall()   
-        cursor.execute('SELECT * FROM Astronaut')
-        astronauts = cursor.fetchall()
-        return render_template("assign_trainings.html", trainings=trainings, astronauts=astronauts)
-    else:
-        training_id = request.form['training_id']
-        selected_ids = request.form.getlist('selected_ids')
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute('SELECT name, training_id, code, description, duration, IFNULL(GROUP_CONCAT(prereq_id), Null) AS prereq_ids FROM Training LEFT JOIN Training_Prerequisite_Training ON training_id = train_id GROUP BY training_id')
+    trainings = cursor.fetchall()   
+    cursor.execute('SELECT * FROM Astronaut')
+    astronauts = cursor.fetchall()
+    return render_template("assign_trainings.html", trainings = trainings,astronauts=astronauts)
 
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        try:
-            astronauts_cant_take = []
-            for astronaut_id in selected_ids:
-                # Check if the astronaut has completed all prerequisite trainings
-                cursor.execute('SELECT prereq_id FROM Training_Prerequisite_Training WHERE train_id = %s', (training_id,))
-                prerequisite_trainings = cursor.fetchall()
 
-                cursor.execute('SELECT training_id FROM Astronaut_Completes_Training WHERE astronaut_id = %s AND status = 1', (astronaut_id,))
-                completed_trainings = [row['training_id'] for row in cursor.fetchall()]
-                cursor.execute('SELECT training_id FROM Astronaut_Completes_Training WHERE astronaut_id = %s', (astronaut_id,))
-                completed_or_not_completed_trainings = [row['training_id'] for row in cursor.fetchall()]
-
-                if all(prereq['prereq_id'] in completed_trainings for prereq in prerequisite_trainings) and training_id not in completed_or_not_completed_trainings:
-                    cursor.execute('INSERT INTO Astronaut_Completes_Training (astronaut_id, training_id, status) VALUES (%s, %s, 0)', (astronaut_id, training_id))
-                    mysql.connection.commit()
-                else:
-                    astronauts_cant_take.append(astronaut_id)
-            
-            if not astronauts_cant_take:
-                flash(f'All selected astronauts have been assigned to training {training_id}', 'info')
-            else:
-                flash(f'Astronauts {", ".join(astronauts_cant_take)} can not be assigned', 'alert')
-
-        except Exception as e:
-            print("Error executing SQL query:", e)
-            flash('An error occurred while processing the request', 'alert')
-
-        return redirect(url_for('assignTrainings'))  # Redirect to the same page after processing
 @app.route("/bid_for_mission", methods=["GET", "POST"])
 def bidForMission():
-    redirect_if_not_logged_in = check_logged_in()
-    if redirect_if_not_logged_in:
-        return redirect_if_not_logged_in
 
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    if request.method == "GET":
-        cursor.execute("SELECT * FROM Mission")
-        missions = cursor.fetchall()
-        for mission in missions:
-            if mission['launch_date']:
-                mission['launch_date'] = mission['launch_date'].strftime('%Y-%m-%d')
-        return render_template("bid_for_mission.html", missions=missions)
-    
-    elif request.method == "POST":
-        bid_amount = request.form.get("bid_amount")
-        astronaut_ids = request.form.getlist("astronaut_ids")  
-        
-        try:
-            bid_amount = float(bid_amount) 
-        except ValueError:
-            flash("Invalid bid amount. Please enter a valid number.", "error")
-            return redirect(url_for("bidForMission"))
-
-        #TODO: Check requirements
-        if bid_amount <= 0:
-            flash("Bid amount must be greater than $0.", "error")
-            return redirect(url_for("bidForMission"))
-        
-        cursor.execute("INSERT INTO Bid (bid_id, bidder_id, amount, bid_date, status) VALUES (%s, %s, %s, CURDATE(), 'Open')", (uuid.uuid4().hex, session.get('company_id'), bid_amount))
-        for astronaut_id in astronaut_ids:
-            cursor.execute("INSERT INTO Bid_Has_Astronaut (bid_id, id) VALUES (%s, %s)", (last_inserted_bid_id, astronaut_id))
-        mysql.connection.commit()
-        
-        return redirect(url_for("bidForMission"))
-
-@app.route("/view_bids", methods=["GET", "POST"])
-def viewBids():
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-
-    if request.method == "POST":
-        bid_id = request.form.get('bid_id')
-        if bid_id:
-            try:
-                cursor.execute("UPDATE Bid SET status = 'Accepted' WHERE bid_id = %s", (bid_id,))
-                mysql.connection.commit()
-                flash('Bid accepted successfully!', 'success')
-                #TODO: Accept only one bid
-            except Exception as e:
-                flash(f'Error accepting bid: {str(e)}', 'error')
-        return redirect(url_for('viewBids'))
-
-    cursor.execute('''
-        SELECT Bid.bid_id, Bid.amount, Bid.bid_date, Bid.status, Mission.title AS mission_title, Company.name AS company_name
-        FROM Bid
-        INNER JOIN Mission_Accepted_Bid ON Bid.bid_id = Mission_Accepted_Bid.bid_id
-        INNER JOIN Mission ON Mission_Accepted_Bid.mission_id = Mission.mission_id
-        INNER JOIN Bidder ON Bid.bidder_id = Bidder.id
-        INNER JOIN Company ON Bidder.id = Company.id
-        ORDER BY Bid.amount DESC
-    ''')
-    bids = cursor.fetchall()
-    return render_template("view_bids.html", bids=bids)
+    return render_template("bid_for_mission.html")
 
 @app.route("/admin_page", methods=["GET", "POST"])
 def admin():
-    redirect_if_not_logged_in = check_logged_in()
-    if redirect_if_not_logged_in:
-        return redirect_if_not_logged_in
+    admin_id = session['userid']  # Assuming the admin's user ID is stored in session
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+
     if request.method == 'POST':
-        if 'expensive_mission' in request.form:
-            cursor.execute("""
-                INSERT INTO SystemReport (report_id, title, content) 
-                SELECT UUID(), 'Most Expensive Missions', CONCAT('Mission ID: ', mission_id, ', Payload Weight: ', payload_weight, ', Title: ', title) 
-                FROM Mission 
-                ORDER BY payload_weight DESC 
-                LIMIT 1;
-            """)
+        
+            if 'expensive_mission' in request.form:
+                cursor.execute("""
+                    INSERT INTO SystemReport (report_id, id, title, content) 
+                    SELECT UUID(), %s, 'Most Expensive Missions', CONCAT('Mission ID: ', mission_id, ', Payload Weight: ', payload_weight, ', Title: ', title) 
+                    FROM Mission 
+                    ORDER BY payload_weight DESC 
+                    LIMIT 1;
+                """, (admin_id,))
+            elif 'mission_status' in request.form:
+                cursor.execute("""
+                    INSERT INTO SystemReport (report_id, id, title, content)
+                    SELECT UUID(), %s, 'Mission Status', 
+                    GROUP_CONCAT(
+                        CONCAT_WS(', ', 
+                            CONCAT('Mission ID: ', M.mission_id),
+                            CONCAT('Title: ', M.title),
+                            CONCAT('Launch Date: ', M.launch_date),
+                            CONCAT('Duration: ', M.duration),
+                            CONCAT('Payload Volume: ', M.payload_volume),
+                            CONCAT('Payload Weight: ', M.payload_weight),
+                            CONCAT('Number of Astronauts: ', M.num_of_astronauts),
+                            CONCAT('Status: ', 
+                                CASE 
+                                    WHEN M.launch_date > CURRENT_DATE THEN 'Upcoming'
+                                    WHEN CURRENT_DATE BETWEEN M.launch_date AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) THEN 'Ongoing'
+                                    ELSE 'Completed'
+                                END)
+                        ) SEPARATOR ' | '
+                    ) AS MissionDetails
+                    FROM Mission M;
+                """, (admin_id,))
+
+            elif 'astronaut_utilization' in request.form:
+                cursor.execute("""
+                    INSERT INTO SystemReport (report_id, id, title, content)
+                    SELECT UUID(), %s, 'Astronaut Utilization', 
+                    GROUP_CONCAT(
+                        CONCAT_WS('; ',
+                            CONCAT('Astronaut ID: ', A.id),
+                            CONCAT('First Name: ', P.first_name),
+                            CONCAT('Last Name: ', P.last_name),
+                            CONCAT('Missions Assigned: ', AggData.MissionsCount),
+                            CONCAT('Trainings Completed: ', AggData.TrainingsCount)
+                        )
+                    )
+                    FROM Astronaut A
+                    JOIN Person P ON A.id = P.id
+                    LEFT JOIN (
+                        SELECT MA.bid_id, COUNT(DISTINCT MA.mission_id) as MissionsCount,
+                            COUNT(DISTINCT AT.training_id) as TrainingsCount
+                        FROM Mission_Accepted_Bid MA
+                        LEFT JOIN Astronaut_Completes_Training AT ON MA.bid_id = AT.astronaut_id AND AT.status = 1
+                        GROUP BY MA.bid_id
+                    ) AggData ON A.id = AggData.bid_id
+                    GROUP BY A.id;
+                """, (admin_id,))
+
+            elif 'financial_overview' in request.form:
+                cursor.execute("""
+                    INSERT INTO SystemReport (report_id, id, title, content)
+                    SELECT UUID(), %s, 'Financial Overview', 
+                    CONCAT_WS(', ',
+                            CONCAT('Company Name: ', C.name),
+                            CONCAT('Total Bids: ', SUM(B.amount)),
+                            CONCAT('Number of Bids: ', COUNT(DISTINCT B.bid_id)),
+                            CONCAT('Transactions Amount: ', SUM(T.amount)),
+                            CONCAT('Number of Transactions: ', COUNT(DISTINCT T.transaction_id)))
+                    FROM Company C
+                    LEFT JOIN Bidder BD ON C.id = BD.id
+                    LEFT JOIN Bid B ON BD.id = B.bidder_id
+                    LEFT JOIN Transaction T ON BD.id = T.bidder_id
+                    GROUP BY C.id;
+                """, (admin_id,))
             mysql.connection.commit()
+        # except MySQLdb.IntegrityError as e:
+        #     print(f"Error: {e}")
+        #     cursor.close()
+        #     flash("Failed to create report. Please ensure you're authorized as an admin.", "error")
+        #     return redirect(url_for('admin'))  # Redirect back to admin page with error
 
-        elif 'duplicate_missions' in request.form:
-            cursor.execute("""
-                INSERT INTO SystemReport (report_id, title, content)
-                SELECT UUID(), 'Duplicate Missions', GROUP_CONCAT(CONCAT('Mission ID: ', mission_id))
-                FROM (
-                    SELECT mission_id, title, description, launch_date
-                    FROM Mission
-                    GROUP BY title, description, launch_date
-                    HAVING COUNT(*) > 1
-                ) AS Duplicates
-                GROUP BY Duplicates.title, Duplicates.description, Duplicates.launch_date;
 
-            """)
-            mysql.connection.commit()
 
-    # Retrieve the latest report for display
-    cursor.execute("SELECT report_id, title, content FROM SystemReport ")
+    # Retrieve the latest reports for display
+    cursor.execute("SELECT report_id, title, content FROM SystemReport")
     reports = cursor.fetchall()
     cursor.close()
     return render_template('admin_page.html', reports=reports)
+
 @app.route("/download_report/<report_id>")
 def download_report(report_id):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -409,8 +306,6 @@ def download_report(report_id):
 def page_not_found(e):
     # Note 'e' is the error object
     return render_template('error_page.html'), 404
-
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5001))

@@ -1,20 +1,25 @@
-{% extends "base.html" %} {% block content%}
+{% extends "base.html" %}
+
+{% block content %}
 <div class="container mt-5">
-  <h2>Admin Dashboard</h2>
-  <form method="POST">
-      <button name="expensive_mission" type="submit" class="btn btn-primary">Generate Most Expensive Mission Report</button>
-      <button name="duplicate_missions" type="submit" class="btn btn-secondary">Generate Duplicate Missions Report</button>
-  </form>
-  <hr>
-  <h3>Reports</h3>
-  {% for report in reports %}
-      <div class="card mt-3">
-          <div class="card-header">{{ report.title }}</div>
-          <div class="card-body">
-              <p class="card-text">{{ report.content }}</p>
-              <a href="/download_report/{{ report.report_id }}" class="btn btn-link">Download Report</a>
-          </div>
-      </div>
-  {% endfor %}
+    <h2>Admin Dashboard</h2>
+    <form method="POST">
+        <button name="expensive_mission" type="submit" class="btn btn-primary">Generate Most Expensive Mission Report</button>
+        <button name="mission_status" type="submit" class="btn btn-secondary">Generate Mission Status Report</button>
+        <button name="astronaut_utilization" type="submit" class="btn btn-success">Generate Astronaut Utilization Report</button>
+        <button name="financial_overview" type="submit" class="btn btn-info">Generate Financial Overview Report</button>
+       
+    </form>
+    <hr>
+    <h3>Reports</h3>
+    {% for report in reports %}
+    <div class="card mt-3">
+        <div class="card-header">{{ report.title }}</div>
+        <div class="card-body">
+            <p class="card-text">{{ report.content }}</p>
+            <a href="/download_report/{{ report.report_id }}" class="btn btn-link">Download Report</a>
+        </div>
+    </div>
+    {% endfor %}
 </div>
-{% endblock%}
+{% endblock %}
