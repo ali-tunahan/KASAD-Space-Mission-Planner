@@ -13,6 +13,7 @@ app.config["MYSQL_HOST"] = "db"
 app.config["MYSQL_USER"] = "root"
 app.config["MYSQL_PASSWORD"] = "dasak"
 app.config["MYSQL_DB"] = "DASAK"
+app.debug = True
 
 mysql = MySQL(app)
 
@@ -139,7 +140,7 @@ def register():
 def createMission():
     return render_template("create_mission.html")
 
-@app.route("/manage_astronauts", methods=["GET", "POST"])
+@app.route("/manage_astronauts", methods=["GET", "POST", "DELETE"])
 def manageAstronauts():
     if 'loggedin' in session:
         astronaut_id = request.args.get('astronaut_id')
@@ -258,6 +259,15 @@ def manageAstronauts():
                 ''', (request.form.get('nationality'), request.form.get('rank'), request.form.get('exp'), astronaut_id))
             mysql.connection.commit()
             return redirect(url_for('manageAstronauts'))
+        elif request.method == "DELETE":
+            print("DELETE ID:"+astronaut_id)
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            cursor.execute('''
+                UPDATE Astronaut
+                SET company_id=NULL
+                WHERE id=%s
+                ''',(astronaut_id,))
+            mysql.connection.commit()
     else:
         print("Not logged in\n")
         return redirect(url_for('login'))

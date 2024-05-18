@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS Company (
 
 CREATE TABLE IF NOT EXISTS Astronaut (
     id CHAR(36) PRIMARY KEY,
-    company_id CHAR(36),
+    company_id CHAR(36) NULL,
     date_of_birth DATE,
     nationality VARCHAR(50),
     rank VARCHAR(50),
