@@ -1,8 +1,14 @@
 {% extends "master.html" %}
-{% block title%} {% endblock%}
+{% block title%} {% endblock %}
 
 {% block content%}
-
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for msg in messages %}
+            <p>{{msg}}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}            
 <h1>ASSIGN TRAINING</h1>
 <style>
     /* Custom CSS to change text color to black */
@@ -11,6 +17,7 @@
         color: black;
     }
 </style>
+
 {%for training in trainings%}
 <div class="card w-51 mb-3">
     <div class="card-body d-flex justify-content-between align-items-center">
@@ -43,43 +50,42 @@
     <div class="modal-dialog modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="exampleModalLabel{{training.training_id}}">Astronauts</h1>
+                <h1 class="modal-title fs-5" id="exampleModalLabel{{training.training_id}}" style="color: black;">Astronauts</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <form method="POST" action="/assign_trainings">
                 {%for astronaut in astronauts%}
                 <div class="card w-51 mb-3">
                     <div class="btn-group" role="group" aria-label="Basic checkbox toggle button group">
                         <div class="card-body d-flex justify-content-between align-items-center">
                             <div>
-                                <h5 class="card-title"><astronaut class="id"></t>{{astronaut.id}} </h5>
-                                <p class="card-text">{{astronaut.company_id}}
-                                </p>
+                                <h5 class="card-title">{{astronaut.id}}</h5>
+                                <p class="card-text">{{astronaut.company_id}}</p>
                             </div>
                             <button class="btn btn-primary" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#collapseExample2" aria-expanded="false"
-                                aria-controls="collapseExample">
+                                data-bs-target="#collapseExample{{astronaut.id}}-{{training.training_id}}" aria-expanded="false"
+                                aria-controls="collapseExample{{astronaut.id}}-{{training.training_id}}">
                                 Details
                             </button>
-                            <input type="checkbox" class="btn-check" id="btncheck1" autocomplete="off">
-                            <label class="btn btn-outline-primary" for="btncheck1">Assign</label>
+                            <input type="checkbox" name="selected_ids" value="{{astronaut.id}}" class="btn-check" id="btncheck{{astronaut.id}}-{{training.training_id}}" autocomplete="off">
+                            <label class="btn btn-outline-primary" for="btncheck{{astronaut.id}}-{{training.training_id}}">Assign</label>
                         </div>
                     </div>
-
                 </div>
-                <div class="collapse" id="collapseExample2">
+                <div class="collapse" id="collapseExample{{astronaut.id}}-{{training.training_id}}">
                     <div class="card card-body">
-                        Some placeholder content for the collapse component. This panel is hidden by default but
-                        revealed when the user
-                        activates the relevant trigger.
+                        {{astronaut.nationality}}
                     </div>
                 </div>
                 {% endfor %}
+                <input type="hidden" name="training_id" value="{{training.training_id}}">
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Save changes</button>
+                <button type="submit" class="btn btn-primary">Save changes</button>
             </div>
+            </form>
         </div>
     </div>
 </div>
