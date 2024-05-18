@@ -24,7 +24,24 @@ def check_logged_in():
         return redirect(url_for('login'))
     return None
 
+def check_account_type():
+    print(session.get('accounttype'))
+    if not session.get('accounttype'):
+        print("Not logged in")
+        return redirect(url_for('login'))
+    return session.get('accounttype')
 
+def company_pageguard():
+    type = check_account_type()
+    if(type == "company"):
+        return None
+    return redirect(url_for('login'))
+
+def astronaut_pageguard():
+    type = check_account_type()
+    if(type == "astronaut"):
+        return None
+    return redirect(url_for('login'))
 
 @app.route("/")
 @app.route("/main", methods=["GET", "POST"])
@@ -49,6 +66,16 @@ def login():
             session['loggedin'] = True
             session['userid'] = user['id']
             session['email'] = user['email']
+            cursor.execute('SELECT * FROM Company WHERE id = %s', (user['id'],))
+            company = cursor.fetchone()
+            cursor.execute('SELECT * FROM Astronaut WHERE id = %s', (user['id'],))
+            astronaut = cursor.fetchone()
+            if(company):
+                session['accounttype'] = 'company'
+            elif(astronaut):
+                session['accounttype'] = 'astronaut'
+            else:
+                session['accounttype'] = 'None'
             message = 'Logged in successfully!'
             return redirect(url_for('main'))
         else:
@@ -81,7 +108,6 @@ def register():
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT email FROM User WHERE email =  %s', (email,))
         
-
         account = cursor.fetchone()
 
         if account:
@@ -157,7 +183,9 @@ def register():
 @app.route("/create_mission", methods=["GET", "POST"])
 def createMission():
     redirect_if_not_logged_in = check_logged_in()
-    if redirect_if_not_logged_in:
+    redirect_if_not_company = company_pageguard()
+    
+    if redirect_if_not_logged_in or redirect_if_not_company:
         return redirect_if_not_logged_in
     
     if request.method == "POST":
@@ -209,7 +237,9 @@ def logout():
 @app.route("/manage_astronauts", methods=["GET", "POST"])
 def manageAstronauts():
     redirect_if_not_logged_in = check_logged_in()
-    if redirect_if_not_logged_in:
+    redirect_if_not_company = company_pageguard()
+    
+    if redirect_if_not_logged_in or redirect_if_not_company:
         return redirect_if_not_logged_in
     # if 'loggedin' in session:
     #     if request.method == "GET":
@@ -246,7 +276,9 @@ def manageAstronauts():
 @app.route("/assign_trainings", methods=["GET", "POST"])
 def assignTrainings():
     redirect_if_not_logged_in = check_logged_in()
-    if redirect_if_not_logged_in:
+    redirect_if_not_company = company_pageguard()
+    
+    if redirect_if_not_logged_in or redirect_if_not_company:
         return redirect_if_not_logged_in
     
     if request.method == 'GET':
@@ -292,7 +324,9 @@ def assignTrainings():
 @app.route("/bid_for_mission", methods=["GET", "POST"])
 def bidForMission():
     redirect_if_not_logged_in = check_logged_in()
-    if redirect_if_not_logged_in:
+    redirect_if_not_company = company_pageguard()
+    
+    if redirect_if_not_logged_in or redirect_if_not_company:
         return redirect_if_not_logged_in
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -328,6 +362,12 @@ def bidForMission():
 
 @app.route("/view_bids", methods=["GET", "POST"])
 def viewBids():
+    redirect_if_not_logged_in = check_logged_in()
+    redirect_if_not_company = company_pageguard()
+    
+    if redirect_if_not_logged_in or redirect_if_not_company:
+        return redirect_if_not_logged_in
+    
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
 
     if request.method == "POST":
@@ -357,8 +397,11 @@ def viewBids():
 @app.route("/admin_page", methods=["GET", "POST"])
 def admin():
     redirect_if_not_logged_in = check_logged_in()
-    if redirect_if_not_logged_in:
+    redirect_if_not_admin = None # TODO check if admin
+    
+    if redirect_if_not_logged_in or redirect_if_not_admin:
         return redirect_if_not_logged_in
+    
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     report = None
     report_type = None
