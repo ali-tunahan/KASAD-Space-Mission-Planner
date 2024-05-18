@@ -1,4 +1,4 @@
 Flask==3.0.3
 mysqlclient==2.2.4
 flask_mysqldb==2.0.0
-Werkzeug==3.0.2
+Werkzeug==3.0.3
