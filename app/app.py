@@ -228,7 +228,9 @@ def register():
                     except Exception as e:
                         print("Error executing SQL query 4:", e)
                     message = 'User successfully created!'
-                
+            session['loggedin'] = True
+            session['userid'] = random_uuid
+            session['email'] = email
             return redirect(url_for('main'))
 
     return render_template('register.html', message = message, companies =  companies)
@@ -701,12 +703,17 @@ def dashboard():
         return redirect_if_not_logged_in
     
     user_id = get_user_id()
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT * FROM Person WHERE id = %s", (user_id,))
+    person = cursor.fetchone()
+    
+    print("CU:",user_id,person)
     
     current_trainings, past_trainings = get_trainings(user_id)
     upcoming_missions, past_missions = get_missions(user_id)
 
     return render_template('dashboard.html', current_trainings=current_trainings, past_trainings=past_trainings,
-                           upcoming_missions=upcoming_missions, past_missions=past_missions)
+                           upcoming_missions=upcoming_missions, past_missions=past_missions, person=person)
     
 def get_trainings(astronaut_id):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)

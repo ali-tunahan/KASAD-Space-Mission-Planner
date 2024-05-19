@@ -4,8 +4,15 @@
 <style></style>
 
 <div class="container mt-4">
-  <h1 class="mb-4">Astronaut Dashboard</h1>
-
+  <h1 class="mb-4">Welcome...</h1>
+  {% if person %}
+  <div class="row">
+    <h2 class="mb-4">
+      {{ [person.title or '', person.first_name or '', person.middle_name or '',
+      person.last_name or '']|reject('equalto', '')|join(' ') }}
+    </h2>
+  </div>
+  {%endif%}
   <div class="row">
     <div class="col-md-4">
       <h2>Trainings</h2>
