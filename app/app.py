@@ -154,7 +154,7 @@ def register():
         # Validation for fields
         if len(password) > 6:
             message = 'Password must not exceed 6 characters.'
-            return render_template('login.html', message=message)
+            return render_template('register.html', message=message)
 
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT email FROM User WHERE email =  %s', (email,))
@@ -171,7 +171,6 @@ def register():
             random_uuid = uuid.uuid4()
             cursor.execute('INSERT INTO User (id, email, password) VALUES (%s, % s, % s)', (str(random_uuid), email, password,))
             mysql.connection.commit()
-            print("im here")
             
             if account_type == 'Astronaut':
                 title = request.form.get('title')
@@ -192,6 +191,7 @@ def register():
                 #TODO COMPANY ID NEEDS TO BE SPECIFIED - NOW IT'S 1
                 cursor.execute('INSERT INTO Astronaut VALUES (%s, %s, %s, %s, %s, %s)', (str(random_uuid),company_id, date_of_birth, nationality, rank, 0,))
                 mysql.connection.commit()
+                session['accounttype'] = 'astronaut'
 
             elif account_type == 'Company':
                 print("im here")
@@ -207,6 +207,7 @@ def register():
                 try:
                     cursor.execute('INSERT INTO Company (id, name, street, city, state, postal_code, founding_date, balance, area_code, phone_number) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',(random_uuid, name, street, city, state, postal_code, founding_date, balance, area_code, phone_number,))
                     mysql.connection.commit()
+                    session['accounttype'] = 'company'
                 except Exception as e:
                     print("Error executing SQL query 2:", e)
 
