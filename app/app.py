@@ -99,8 +99,11 @@ def get_user_id():
 @app.route("/")
 @app.route("/main", methods=["GET", "POST"])
 def main():
-    message = "CU"
-    return render_template("main.html", message=message)
+    user_id = get_user_id()
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT * FROM Company WHERE id = %s", (user_id,))
+    company = cursor.fetchone()
+    return render_template("main.html",company=company)
 
 @app.route('/login', methods =['GET', 'POST'])
 def login():
