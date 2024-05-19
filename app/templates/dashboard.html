@@ -31,6 +31,20 @@
         <p>No current trainings.</p>
       </div>
       {% endif %}
+      {% if past_trainings %}
+      <ul class="list-group">
+        {% for training in past_trainings %}
+        <li class="list-group-item">
+          {{ training.name }} -
+          <strong>Status:</strong> {{ 'Completed' }}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="">
+        <p>No past trainings.</p>
+      </div>
+      {% endif %}
     </div>
 
     <div class="col-md-4">
