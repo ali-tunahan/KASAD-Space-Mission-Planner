@@ -38,6 +38,30 @@
           </div>
         </div>
       </div>
+      <div class="row g-2 m-2"> Name</div>
+      <div class="row g-2">
+        <div class="col-md">
+          <div>
+            <input type="text" class="form-control" name="name" id="floatingName" value="{{ request.args.get('name', '') }}">
+          </div>
+        </div>
+      </div>
+      <div class="row g-2 m-2"> Middle Name</div>
+      <div class="row g-2">
+        <div class="col-md">
+          <div>
+            <input type="text" class="form-control" name="Mname" id="floatingMname" value="{{ request.args.get('Mname', '') }}">
+          </div>
+        </div>
+      </div>
+      <div class="row g-2 m-2"> Last Name</div>
+      <div class="row g-2">
+        <div class="col-md">
+          <div>
+            <input type="text" class="form-control" name="Lname" id="floatingLname" value="{{ request.args.get('Lname', '') }}">
+          </div>
+        </div>
+      </div>
       <div class="row g-2 m-2"> Nationality</div>
       <div class="row g-2">
         <div class="col-md">
@@ -401,6 +425,9 @@
     document.getElementById('rankFilter').value = '';
     document.getElementById('floatingExperienceLower').value = '';
     document.getElementById('floatingExperienceUpper').value = '';
+    document.getElementById('floatingName').value = '';
+    document.getElementById('floatingMname').value = '';
+    document.getElementById('floatingLname').value = '';
   }
 
   document.getElementById('resetButton').addEventListener('click', function() {
