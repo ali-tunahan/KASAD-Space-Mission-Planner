@@ -23,17 +23,17 @@
   </div>
   <div class="offcanvas-body">
     <form action="/manage_astronauts" method="GET">
-      <div class="row g-2 m-2"> Birth Date (YYYY-MM-DD)</div>
+      <div class="row g-2 m-2"> Birth Date </div>
       <div class="row g-2">
         <div class="col-md">
           <div class="form-floating mb-3">
-            <input type="text" class="form-control" name="dateOfBirthLower" id="floatingDateLower" placeholder="12-05-1962">
+            <input type="date" class="form-control" name="dateOfBirthLower" id="floatingDateLower" placeholder="12-05-1962" value="{{ request.args.get('dateOfBirthLower', '') }}">
             <label for="floatingDateLower">Min</label>
           </div>
         </div>
         <div class="col-md">
           <div class="form-floating">
-            <input type="text" class="form-control" name="dateOfBirthUpper" id="floatingDateUpper" placeholder="12-05-1991">
+            <input type="date" class="form-control" name="dateOfBirthUpper" id="floatingDateUpper" placeholder="12-05-1991" value="{{ request.args.get('dateOfBirthUpper', '') }}">
             <label for="floatingDateUpper">Max</label>
           </div>
         </div>
@@ -42,7 +42,7 @@
       <div class="row g-2">
         <div class="col-md">
           <div>
-            <input type="text" class="form-control" name="nationalityFilter" id="floatingNationality">
+            <input type="text" class="form-control" name="nationalityFilter" id="floatingNationality" value="{{ request.args.get('nationalityFilter', '') }}">
           </div>
         </div>
       </div>
@@ -50,7 +50,7 @@
       <div class="row g-2">
         <div class="col-md">
           <div>
-            <input type="text" class="form-control" name="rankFilter" id="rankFilter">
+            <input type="text" class="form-control" name="rankFilter" id="rankFilter" value="{{ request.args.get('rankFilter', '') }}">
           </div>
         </div>
       </div>
@@ -58,21 +58,25 @@
       <div class="row g-2">
         <div class="col-md">
           <div class="form-floating mb-3">
-            <input type="text" class="form-control" name="yearsOfExperienceLower" id="floatingExperienceLower" placeholder="12-05-1962">
+            <input type="text" class="form-control" name="yearsOfExperienceLower" id="floatingExperienceLower" placeholder="12-05-1962"
+            value="{{ request.args.get('yearsOfExperienceLower', '') }}">
             <label for="floatingExperienceLower">Min</label>
           </div>
         </div>
         <div class="col-md">
           <div class="form-floating">
-            <input type="text" class="form-control" name="yearsOfExperienceUpper" id="floatingExperienceUpper" placeholder="12-05-1991">
+            <input type="text" class="form-control" name="yearsOfExperienceUpper" id="floatingExperienceUpper" placeholder="12-05-1991" value="{{ request.args.get('yearsOfExperienceUpper', '') }}">
             <label for="floatingInputGrid">Max</label>
           </div>
         </div>
       </div>
-      <div class="row w-25 m-2">
-        <button type="submit" class="btn btn-secondary">
-          Filter
-        </button>
+      <div class="row g-2 m-2">
+        <div class="col-auto">
+          <button type="submit" class="btn btn-secondary">Filter</button>
+        </div>
+        <div class="col-auto">
+          <button type="button" class="btn btn-secondary" id="resetButton">Reset</button>
+        </div>
       </div>
     </form>
   </div>
@@ -389,6 +393,19 @@
         alert('Error deleting astronaut: ' + error.message);
     });
   }
+  // Function to clear all fields in the form
+  function clearForm() {
+    document.getElementById('floatingDateLower').value = '';
+    document.getElementById('floatingDateUpper').value = '';
+    document.getElementById('floatingNationality').value = '';
+    document.getElementById('rankFilter').value = '';
+    document.getElementById('floatingExperienceLower').value = '';
+    document.getElementById('floatingExperienceUpper').value = '';
+  }
+
+  document.getElementById('resetButton').addEventListener('click', function() {
+      clearForm(); 
+  });
 </script>
 
 {% endblock %}
