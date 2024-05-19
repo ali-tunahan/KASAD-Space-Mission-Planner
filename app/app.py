@@ -177,12 +177,6 @@ def register():
             flash(message, 'error')
             return render_template('register.html', message = message)
 
-        # Validation for fields
-        if len(password) > 6:
-            message = 'Password must not exceed 6 characters.'
-            flash(message, 'error')
-            return render_template('register.html', message=message)
-
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT email FROM User WHERE email =  %s', (email,))
         
