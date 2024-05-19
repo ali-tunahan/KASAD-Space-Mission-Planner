@@ -503,44 +503,20 @@ def bidForMission():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
     if request.method == "GET":
-        # Fetch min and max values for filters
-        cursor.execute("SELECT MIN(launch_date) as min_date, MAX(launch_date) as max_date FROM Mission")
-        launch_date_range = cursor.fetchone()
-        
-        cursor.execute("SELECT MIN(duration) as min_duration, MAX(duration) as max_duration FROM Mission")
-        duration_range = cursor.fetchone()
-        
-        cursor.execute("SELECT MIN(payload_volume) as min_volume, MAX(payload_volume) as max_volume FROM Mission")
-        volume_range = cursor.fetchone()
-        
-        cursor.execute("SELECT MIN(payload_weight) as min_weight, MAX(payload_weight) as max_weight FROM Mission")
-        weight_range = cursor.fetchone()
-
-        # Prepare query based on filters
-        filter_params = request.args
-        query = "SELECT * FROM Mission WHERE 1=1"
-        params = []
-
-        if 'launch_date' in filter_params and filter_params['launch_date']:
-            query += " AND launch_date = %s"
-            params.append(filter_params['launch_date'])
-        if 'duration' in filter_params and filter_params['duration']:
-            query += " AND duration <= %s"
-            params.append(filter_params['duration'])
-        if 'volume' in filter_params and filter_params['volume']:
-            query += " AND payload_volume <= %s"
-            params.append(filter_params['volume'])
-        if 'weight' in filter_params and filter_params['weight']:
-            query += " AND payload_weight <= %s"
-            params.append(filter_params['weight'])
-        
-        cursor.execute(query, params)
+        query = """
+        SELECT M.mission_id, M.title, M.description, M.launch_date, M.payload_volume, M.payload_weight, M.duration,
+               GROUP_CONCAT(T.name ORDER BY T.name ASC SEPARATOR ', ') AS training_names
+        FROM Mission M
+        LEFT JOIN Mission_Requires_Training MRT ON M.mission_id = MRT.mission_id
+        LEFT JOIN Training T ON MRT.training_id = T.training_id
+        GROUP BY M.mission_id
+        """
+        cursor.execute(query)
         missions = cursor.fetchall()
 
-        return render_template("bid_for_mission.html", missions=missions, launch_date_range=launch_date_range, duration_range=duration_range, volume_range=volume_range, weight_range=weight_range)
+        return render_template("bid_for_mission.html", missions=missions)
 
     elif request.method == "POST":
-        mission_id = request.form.get("mission_id")
         bid_amount = request.form.get("bid_amount")
         astronaut_ids = request.form.getlist("astronaut_ids")
 
