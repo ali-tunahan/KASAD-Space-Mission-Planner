@@ -342,9 +342,9 @@ INSERT INTO Bidder (id, specialization) VALUES
 ('66666666-6666-6666-6666-666666666666', 'Spacecraft Design');
 
 INSERT INTO Bid (bid_id, mission_id, bidder_id, amount, bid_date, status) VALUES
-('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1','d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4' ,'44444444-4444-4444-4444-444444444444', 500000.00, '2023-04-01', 'Open'),
-('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2','d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4' ,'55555555-5555-5555-5555-555555555555', 750000.00, '2023-04-01', 'Open'),
-('c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3','e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5' ,'66666666-6666-6666-6666-666666666666', 600000.00, '2023-04-01', 'Open');
+('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1','d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4' ,'44444444-4444-4444-4444-444444444444', 500000.00, '2023-04-01', 'Accepted'),
+('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2','d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4' ,'55555555-5555-5555-5555-555555555555', 750000.00, '2023-04-01', 'Accepted'),
+('c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3','e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5' ,'66666666-6666-6666-6666-666666666666', 600000.00, '2023-04-01', 'Accepted');
 
 INSERT INTO Employer (id, industry) VALUES
 ('44444444-4444-4444-4444-444444444444', 'Aerospace'),

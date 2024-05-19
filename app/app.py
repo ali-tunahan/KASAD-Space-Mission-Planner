@@ -256,7 +256,6 @@ def register():
                     except Exception as e:
                         print("Error executing SQL query 4:", e)
                     message = 'User successfully created!'
-                    flash(message, 'success')
             session['loggedin'] = True
             session['userid'] = random_uuid
             session['email'] = email
