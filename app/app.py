@@ -265,6 +265,7 @@ def register():
 
 @app.route("/create_mission", methods=["GET", "POST"])
 def createMission():
+    user_id = get_user_id()
     redirect_if_not_logged_in = check_logged_in()
     redirect_if_not_company = company_pageguard()
     
@@ -299,7 +300,7 @@ def createMission():
         cursor.execute('''
             INSERT INTO Mission (mission_id, employer_id, title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight) 
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ''', (mission_id, session.get('company_id'), title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight))
+        ''', (mission_id, session.get('user_id'), title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight))
         for training_id in required_trainings:
             if training_id:  
                 cursor.execute('''
@@ -589,7 +590,9 @@ def bidForMission():
     elif request.method == "POST":
         bid_amount = request.form.get("bid_amount")
         astronaut_ids = request.form.getlist("astronaut_ids")
-
+        mission_id = request.form.get("mission_id")
+        user_id = get_user_id()
+        print("MISSION ID IS", mission_id)
         try:
             bid_amount = float(bid_amount)
             if bid_amount <= 0:
@@ -597,13 +600,13 @@ def bidForMission():
                 return redirect(url_for("bidForMission"))
     
             # Check for scheduling conflicts before inserting the bid
-            cursor.execute("SELECT * FROM Mission where mission_id = %s",(mission_id,))
+            cursor.execute("SELECT * FROM Mission where mission_id = %s", (mission_id,))
             current_mission = cursor.fetchone()
             
             conflicts = []
             for astronaut_id in astronaut_ids:
                 cursor.execute("""
-            SELECT M.title,
+            SELECT M.title
             FROM Mission_Accepted_Bid MAB
             JOIN Mission M ON MAB.mission_id = M.mission_id
             JOIN Bid_Has_Astronaut BHA ON MAB.bid_id = BHA.bid_id
@@ -625,12 +628,14 @@ def bidForMission():
 
                 # If no conflicts, proceed to insert the bid
                 bid_id = uuid.uuid4().hex
-                cursor.execute("INSERT INTO Bid (bid_id, mission_id, bidder_id, amount, bid_date, status) VALUES (%s, %s, %s, %s, CURDATE(), 'Open')", (bid_id, mission_id, session.get('company_id'), bid_amount))
+                cursor.execute("INSERT INTO Bid (bid_id, mission_id, bidder_id, amount, bid_date, status) VALUES (%s, %s, %s, %s, CURDATE(), 'Open')", (bid_id, mission_id, user_id, bid_amount))
                 mysql.connection.commit()
-    
+        
                 for astronaut_id in astronaut_ids:
                     cursor.execute("INSERT INTO Bid_Has_Astronaut (bid_id, id) VALUES (%s, %s)", (bid_id, astronaut_id))
                 mysql.connection.commit()
+            return redirect(url_for("bidForMission"))
+                
         except ValueError as e:
             mysql.connection.rollback()  # Rollback in case of any error
             flash(f"An error occurred: {str(e)}", "error")
@@ -660,13 +665,11 @@ def viewBids():
     
     current_company_id = get_user_id()
     cursor.execute('''
-        SELECT Bid.bid_id, Bid.amount, Bid.bid_date, Bid.status, Mission.title AS mission_title, Company.name AS company_name
+        SELECT Bid.bid_id, Bid.amount, Bid.bid_date, Bid.status, Mission.title AS mission_title, Company.name AS company_name, employer_id
         FROM Bid
-        INNER JOIN Mission_Accepted_Bid ON Bid.bid_id = Mission_Accepted_Bid.bid_id
-        INNER JOIN Mission ON Mission_Accepted_Bid.mission_id = Mission.mission_id
+        INNER JOIN Mission ON Bid.mission_id = Mission.mission_id
         INNER JOIN Bidder ON Bid.bidder_id = Bidder.id
         INNER JOIN Company ON Bidder.id = Company.id
-        WHERE Mission.employer_id = %s
         ORDER BY Bid.amount DESC
     ''',(current_company_id,))
     bids = cursor.fetchall()
