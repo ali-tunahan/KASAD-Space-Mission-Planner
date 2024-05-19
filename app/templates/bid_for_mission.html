@@ -47,16 +47,28 @@
     <!-- Filter Form -->
     <form method="GET" action="{{ url_for('bidForMission') }}">
         <label for="launch_date">Launch Date:</label>
-        <input type="date" id="launch_date" name="launch_date" min="{{ launch_date_range.min_date }}" max="{{ launch_date_range.max_date }}">
+        <input type="date" id="launch_date" name="launch_date" 
+               min="{{ launch_date_range.min_date }}" 
+               max="{{ launch_date_range.max_date }}"
+               value="{{ request.args.get('launch_date', '') }}">
     
-        <label for="duration">Duration:</label>
-        <input type="number" id="duration" name="duration" min="{{ duration_range.min_duration }}" max="{{ duration_range.max_duration }}">
+        <label for="duration">Duration (months):</label>
+        <input type="number" id="duration" name="duration" 
+               min="{{ duration_range.min_duration }}" 
+               max="{{ duration_range.max_duration }}"
+               value="{{ request.args.get('duration', '') }}">
     
         <label for="volume">Payload Volume (cubic meters):</label>
-        <input type="number" id="volume" name="volume" min="{{ volume_range.min_volume }}" max="{{ volume_range.max_volume }}">
+        <input type="number" id="volume" name="volume" 
+               min="{{ volume_range.min_volume }}" 
+               max="{{ volume_range.max_volume }}"
+               value="{{ request.args.get('volume', '') }}">
     
         <label for="weight">Payload Weight (kg):</label>
-        <input type="number" id="weight" name="weight" min="{{ weight_range.min_weight }}" max="{{ weight_range.max_weight }}">
+        <input type="number" id="weight" name="weight" 
+               min="{{ weight_range.min_weight }}" 
+               max="{{ weight_range.max_weight }}"
+               value="{{ request.args.get('weight', '') }}">
     
         <button type="submit">Filter</button>
     </form>
