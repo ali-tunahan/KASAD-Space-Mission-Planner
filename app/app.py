@@ -557,15 +557,16 @@ def bidForMission():
         query = """ SELECT M.*
                     FROM Mission M
                     LEFT JOIN Mission_Accepted_Bid MAB ON M.mission_id = MAB.mission_id
-                    WHERE MAB.bid_id IS NULL;
+                    WHERE MAB.bid_id IS NULL
                 """
         params = []
+        
 
         if 'launch_date' in filter_params and filter_params['launch_date']:
             query += " AND launch_date = %s"
             params.append(filter_params['launch_date'])
         if 'duration' in filter_params and filter_params['duration']:
-            query += " AND duration <= %s"
+            query += " AND duration <= %d"
             params.append(filter_params['duration'])
         if 'volume' in filter_params and filter_params['volume']:
             query += " AND payload_volume <= %s"
@@ -573,7 +574,7 @@ def bidForMission():
         if 'weight' in filter_params and filter_params['weight']:
             query += " AND payload_weight <= %s"
             params.append(filter_params['weight'])
-        
+        print(query, "\n NO WAY \n", params)
         cursor.execute(query, params)
         missions = cursor.fetchall()
         company_id = get_user_id()
