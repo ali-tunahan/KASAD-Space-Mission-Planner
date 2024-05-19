@@ -626,14 +626,15 @@ def bidForMission():
                         flash(f"Astronaut Name {conflict[0]} has a scheduling conflict with mission '{conflict[1]}'.", "error")
                     return redirect(url_for("bidForMission"))
 
-                # If no conflicts, proceed to insert the bid
-                bid_id = uuid.uuid4().hex
-                cursor.execute("INSERT INTO Bid (bid_id, mission_id, bidder_id, amount, bid_date, status) VALUES (%s, %s, %s, %s, CURDATE(), 'Open')", (bid_id, mission_id, user_id, bid_amount))
-                mysql.connection.commit()
+            # If no conflicts, proceed to insert the bid
+            bid_id = uuid.uuid4().hex
+            cursor.execute("INSERT INTO Bid (bid_id, mission_id, bidder_id, amount, bid_date, status) VALUES (%s, %s, %s, %s, CURDATE(), 'Open')", (bid_id, mission_id, user_id, bid_amount))
+            mysql.connection.commit()
+            
         
-                for astronaut_id in astronaut_ids:
-                    cursor.execute("INSERT INTO Bid_Has_Astronaut (bid_id, id) VALUES (%s, %s)", (bid_id, astronaut_id))
-                mysql.connection.commit()
+            for astronaut_id in astronaut_ids:
+                cursor.execute("INSERT INTO Bid_Has_Astronaut (bid_id, id) VALUES (%s, %s)", (bid_id, astronaut_id))
+            mysql.connection.commit()
             return redirect(url_for("bidForMission"))
                 
         except ValueError as e:
