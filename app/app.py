@@ -199,7 +199,7 @@ def register():
             random_uuid = uuid.uuid4()
             cursor.execute('INSERT INTO User (id, email, password) VALUES (%s, % s, % s)', (str(random_uuid), email, password,))
             mysql.connection.commit()
-            
+
             if account_type == 'Astronaut':
                 title = request.form.get('title')
                 first_name = request.form.get('first_name')
@@ -285,26 +285,27 @@ def createMission():
         payload_volume = request.form.get('payload_volume')
         payload_weight = request.form.get('payload_weight')
         required_trainings = request.form.getlist('required_trainings[]') 
+ 
+        print(required_trainings)
         
         if not title or not description or not objectives or not launch_date or not duration or not num_of_astronauts or not payload_volume or not payload_weight:
+   
             return render_template("create_mission.html", trainings=trainings)
         
         if datetime.strptime(launch_date, '%Y-%m-%d') < datetime.now():
+            flash("Launch date must be in the future", 'error')
             return render_template("create_mission.html", trainings=trainings)
-
         mission_id = uuid.uuid4().hex
         cursor.execute('''
             INSERT INTO Mission (mission_id, employer_id, title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight) 
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', (mission_id, session.get('company_id'), title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight))
-        
         for training_id in required_trainings:
             if training_id:  
                 cursor.execute('''
                     INSERT INTO Mission_Requires_Training (mission_id, training_id)
                     VALUES (%s, %s)
                 ''', (mission_id, training_id))
-        
         mysql.connection.commit()
         return redirect(url_for('main'))
 

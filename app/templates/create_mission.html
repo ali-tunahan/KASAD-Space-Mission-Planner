@@ -1,54 +1,133 @@
 {% extends "master.html" %} {% block content %}
+
+<style>
+  .alert {
+    font-size: 15px;
+    color: red;
+  }
+</style>
+
 <div class="container mt-5">
-    <h1>Create A Space Mission</h1>
-    <form method="POST">
-        <div class="mb-4">
-            <label for="title" class="form-label">Title of the Mission</label>
-            <input type="text" class="form-control" id="title" name="title" placeholder="Enter the desired name for the mission" required>
-        </div>
-        <div class="mb-4">
-            <label for="description" class="form-label">Mission Description</label>
-            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Provide a detailed explanation of the mission." required></textarea>
-        </div>
-        <div class="mb-4">
-            <label for="objectives" class="form-label">Mission Objectives</label>
-            <input type="text" class="form-control" id="objectives" name="objectives" placeholder="Specify the primary objectives of the mission">
-        </div>
-        <div class="mb-4">
-            <label for="launch_date" class="form-label">Launch Date</label>
-            <input type="date" class="form-control" id="launch_date" name="launch_date" placeholder="Select the planned launch date">
-        </div>
-        <div class="mb-4">
-            <label for="duration" class="form-label">Duration</label>
-            <input type="number" class="form-control" id="duration" name="duration" placeholder="Duration of the mission in months">
-        </div>
-        <div class="mb-4">
-            <label for="num_of_astronauts" class="form-label">Number of Required Astronauts</label>
-            <input type="number" class="form-control" id="num_of_astronauts" name="num_of_astronauts" placeholder="Total astronauts required for the mission">
-        </div>
-        <div class="mb-4">
-            <label for="payload_volume" class="form-label">Payload Volume</label>
-            <input type="number" class="form-control" id="payload_volume" name="payload_volume" placeholder="Total volume of payload in cubic meters">
-        </div>
-        <div class="mb-4">
-            <label for="payload_weight" class="form-label">Payload Weight</label>
-            <input type="number" class="form-control" id="payload_weight" name="payload_weight" placeholder="Total weight of the payload in kilograms">
-        </div>
-        <div class="mb-4">
-            <label for="unwanted_situations" class="form-label">Unwanted Situations</label>
-            <textarea class="form-control" id="unwanted_situations" name="unwanted_situations" rows="3" placeholder="Describe any potential unwanted situations and how they should be handled."></textarea>
-        </div>
-        <div class="mb-4">
-            <label class="form-label">Required Trainings</label>
-            {% for training in trainings %}
-            <div>
-                <input type="checkbox" id="training_{{ training.training_id }}" name="required_trainings[]" value="{{ training.training_id }}">
-                <label for="training_{{ training.training_id }}">{{ training.name }}</label>
-            </div>
-            {% endfor %}
-        </div>  
-        <button type="submit" class="btn btn-primary">Create Mission</button>
-    </form>
+  <h1>Create A Space Mission</h1>
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %} {% for category, message in messages %}
+  <div class="alert alert-{{ category }}">{{ message }}</div>
+  {% endfor %} {% endif %} {% endwith %}
+  <form method="POST">
+    <div class="mb-4">
+      <label for="title" class="form-label">Title of the Mission</label>
+      <input
+        type="text"
+        class="form-control"
+        id="title"
+        name="title"
+        placeholder="Enter the desired name for the mission"
+        required
+      />
+    </div>
+    <div class="mb-4">
+      <label for="description" class="form-label">Mission Description</label>
+      <textarea
+        class="form-control"
+        id="description"
+        name="description"
+        rows="3"
+        placeholder="Provide a detailed explanation of the mission."
+        required
+      ></textarea>
+    </div>
+    <div class="mb-4">
+      <label for="objectives" class="form-label">Mission Objectives</label>
+      <input
+        type="text"
+        class="form-control"
+        id="objectives"
+        name="objectives"
+        placeholder="Specify the primary objectives of the mission"
+      />
+    </div>
+    <div class="mb-4">
+      <label for="launch_date" class="form-label">Launch Date</label>
+      <input
+        type="date"
+        class="form-control"
+        id="launch_date"
+        name="launch_date"
+        placeholder="Select the planned launch date"
+      />
+    </div>
+    <div class="mb-4">
+      <label for="duration" class="form-label">Duration</label>
+      <input
+        type="number"
+        class="form-control"
+        id="duration"
+        name="duration"
+        placeholder="Duration of the mission in months"
+      />
+    </div>
+    <div class="mb-4">
+      <label for="num_of_astronauts" class="form-label"
+        >Number of Required Astronauts</label
+      >
+      <input
+        type="number"
+        class="form-control"
+        id="num_of_astronauts"
+        name="num_of_astronauts"
+        placeholder="Total astronauts required for the mission"
+      />
+    </div>
+    <div class="mb-4">
+      <label for="payload_volume" class="form-label">Payload Volume</label>
+      <input
+        type="number"
+        class="form-control"
+        id="payload_volume"
+        name="payload_volume"
+        placeholder="Total volume of payload in cubic meters"
+      />
+    </div>
+    <div class="mb-4">
+      <label for="payload_weight" class="form-label">Payload Weight</label>
+      <input
+        type="number"
+        class="form-control"
+        id="payload_weight"
+        name="payload_weight"
+        placeholder="Total weight of the payload in kilograms"
+      />
+    </div>
+    <div class="mb-4">
+      <label for="unwanted_situations" class="form-label"
+        >Unwanted Situations</label
+      >
+      <textarea
+        class="form-control"
+        id="unwanted_situations"
+        name="unwanted_situations"
+        rows="3"
+        placeholder="Describe any potential unwanted situations and how they should be handled."
+      ></textarea>
+    </div>
+    <div class="mb-4">
+      <label class="form-label">Required Trainings</label>
+      {% for training in trainings %}
+      <div>
+        <input
+          type="checkbox"
+          id="training_{{ training.training_id }}"
+          name="required_trainings[]"
+          value="{{ training.training_id }}"
+        />
+        <label for="training_{{ training.training_id }}"
+          >{{ training.name }}</label
+        >
+      </div>
+      {% endfor %}
+    </div>
+    <button type="submit" class="btn btn-primary">Create Mission</button>
+  </form>
 </div>
 
 {% endblock %}
