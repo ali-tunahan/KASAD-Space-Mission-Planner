@@ -506,17 +506,17 @@ def assignTrainings():
                 completed_or_not_completed_trainings = [row['training_id'] for row in cursor.fetchall()]
 
 
-            if all(prereq['prereq_id'] in completed_trainings for prereq in prerequisite_trainings) and training_id not in completed_or_not_completed_trainings:
-                cursor.execute('INSERT INTO Astronaut_Completes_Training (astronaut_id, training_id, status) VALUES (%s, %s, 0)', (astronaut_id, training_id))
-                mysql.connection.commit()
-            else:
-                cursor.execute('SELECT * FROM Person WHERE id = %s', (astronaut_id,))
-                astro_name_result = cursor.fetchone()
-                astro_name = astro_name_result['first_name'] +' '+astro_name_result['middle_name'] +' '+ astro_name_result['last_name']
-                astronauts_cant_take.append(astro_name)
-            cursor.execute('SELECT name FROM Training WHERE training_id = %s', (training_id,))
-            training_name_result = cursor.fetchone()
-            training_name = training_name_result['name']
+                if all(prereq['prereq_id'] in completed_trainings for prereq in prerequisite_trainings) and training_id not in completed_or_not_completed_trainings:
+                    cursor.execute('INSERT INTO Astronaut_Completes_Training (astronaut_id, training_id, status) VALUES (%s, %s, 0)', (astronaut_id, training_id))
+                    mysql.connection.commit()
+                else:
+                    cursor.execute('SELECT * FROM Person WHERE id = %s', (astronaut_id,))
+                    astro_name_result = cursor.fetchone()
+                    astro_name = astro_name_result['first_name'] +' '+astro_name_result['middle_name'] +' '+ astro_name_result['last_name']
+                    astronauts_cant_take.append(astro_name)
+                cursor.execute('SELECT name FROM Training WHERE training_id = %s', (training_id,))
+                training_name_result = cursor.fetchone()
+                training_name = training_name_result['name']
             if not astronauts_cant_take:
                 flash(f'All selected astronauts have been assigned to training {training_name}', 'success')
             else:
@@ -622,10 +622,16 @@ def bidForMission():
                 if result:
                     name =  result['title'] + " " + result['rank'] + " " + result['first_name'] + " " + result['last_name']
                     conflicts.append((name, result['title']))  # Append astronaut ID and mission title
-
+                cursor.execute('SELECT training_id FROM Mission_Requires_Training WHERE mission_id = %s', (mission_id,))
+                prerequisite_trainings = cursor.fetchall()
+                cursor.execute('SELECT training_id FROM Astronaut_Completes_Training WHERE astronaut_id = %s AND status = 1', (astronaut_id,))
+                completed_trainings = [row['training_id'] for row in cursor.fetchall()]
+                if not (all(prereq['training_id'] in completed_trainings for prereq in prerequisite_trainings)):
+                    flash(f"Selected astronauts can not be sent to mission because they do not meet the training requirements.", "danger")
+                    return redirect(url_for("bidForMission"))
                 if conflicts:
                     for conflict in conflicts:
-                        flash(f"Astronaut Name {conflict[0]} has a scheduling conflict with mission '{conflict[1]}'.", "error")
+                        flash(f"Astronaut Name {conflict[0]} has a scheduling conflict with mission '{conflict[1]}'.", "danger")
                     return redirect(url_for("bidForMission"))
 
             # If no conflicts, proceed to insert the bid

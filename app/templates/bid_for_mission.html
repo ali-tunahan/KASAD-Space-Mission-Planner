@@ -2,7 +2,18 @@
 {% block title %}Bid for a Mission{% endblock %}
 
 {% block content %}
-
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<ul class=flashes>
+    {% for category, message in messages %}
+    <div class="alert alert-{{category}} alert-dismissible fade show" role="alert">
+        <strong>{{message}}</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endwith %}
 <style>
   .mission-item {
     background-color: #33333f; /* Dark background for contrast */
@@ -45,12 +56,6 @@
 
 <div class="container-fluid py-4 px-5">
   <h1>Bid for a Mission</h1>
-
-
-  {% with messages = get_flashed_messages(with_categories=true) %} {% if
-  messages %} {% for category, message in messages %}
-  <div class="alert alert-{{ category }}">{{ message }}</div>
-  {% endfor %} {% endif %} {% endwith %}
   <!-- Filter Form -->
   <form method="GET" action="{{ url_for('bidForMission') }}">
     <label for="launch_date">Launch Date:</label>
