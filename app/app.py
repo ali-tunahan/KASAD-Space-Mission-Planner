@@ -493,6 +493,7 @@ def assignTrainings():
             flash('An error occurred while processing the request', 'alert')
 
         return redirect(url_for('assignTrainings'))  # Redirect to the same page after processing
+    
 @app.route("/bid_for_mission", methods=["GET", "POST"])
 def bidForMission():
     redirect_if_not_logged_in = check_logged_in()
@@ -503,34 +504,54 @@ def bidForMission():
 
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     if request.method == "GET":
-        cursor.execute("SELECT * FROM Mission")
+        cursor.execute("""
+        SELECT M.mission_id, M.title, M.description, M.launch_date, M.payload_volume, M.payload_weight, M.duration, 
+               B.bidder_id, C.id AS company_id, C.name AS company_name
+        FROM Mission M
+        LEFT JOIN Mission_Accepted_Bid MAB ON M.mission_id = MAB.mission_id
+        LEFT JOIN Bid B ON MAB.bid_id = B.bid_id
+        LEFT JOIN Bidder BD ON B.bidder_id = BD.id
+        LEFT JOIN Company C ON BD.id = C.id
+        """)
         missions = cursor.fetchall()
         for mission in missions:
             if mission['launch_date']:
                 mission['launch_date'] = mission['launch_date'].strftime('%Y-%m-%d')
-        return render_template("bid_for_mission.html", missions=missions)
+        
+        # Assuming you also want to list astronauts for bidding, ensure you fetch them correctly
+        company_id = session.get('company_id')  # Assumes you store company_id in session upon login
+        cursor.execute("SELECT * FROM Astronaut WHERE company_id = %s", (company_id,))
+        astronauts = cursor.fetchall()
+
+        return render_template("bid_for_mission.html", missions=missions, astronauts=astronauts)
     
     elif request.method == "POST":
+        mission_id = request.form.get("mission_id")
         bid_amount = request.form.get("bid_amount")
-        astronaut_ids = request.form.getlist("astronaut_ids")  
+        astronaut_ids = request.form.getlist("astronaut_ids")
+        
+        # Debug print to check mission_id
+        print("Mission ID received:", mission_id)
         
         try:
-            bid_amount = float(bid_amount) 
+            bid_amount = float(bid_amount)
+            if bid_amount <= 0:
+                flash("Bid amount must be greater than $0.", "error")
+                return redirect(url_for("bidForMission"))
+            
+            bid_id = uuid.uuid4().hex
+            cursor.execute("INSERT INTO Bid (bid_id, bidder_id, amount, bid_date, status) VALUES (%s, %s, %s, CURDATE(), 'Open')", (bid_id, session.get('company_id'), bid_amount))
+            mysql.connection.commit()
+            for astronaut_id in astronaut_ids:
+                cursor.execute("INSERT INTO Bid_Has_Astronaut (bid_id, id) VALUES (%s, %s)", (bid_id, astronaut_id))
+            mysql.connection.commit()
+            
+            flash("Bid submitted successfully!", "success")
+            return redirect(url_for("bidForMission"))
         except ValueError:
             flash("Invalid bid amount. Please enter a valid number.", "error")
             return redirect(url_for("bidForMission"))
 
-        #TODO: Check requirements
-        if bid_amount <= 0:
-            flash("Bid amount must be greater than $0.", "error")
-            return redirect(url_for("bidForMission"))
-        
-        cursor.execute("INSERT INTO Bid (bid_id, bidder_id, amount, bid_date, status) VALUES (%s, %s, %s, CURDATE(), 'Open')", (uuid.uuid4().hex, session.get('company_id'), bid_amount))
-        for astronaut_id in astronaut_ids:
-            cursor.execute("INSERT INTO Bid_Has_Astronaut (bid_id, id) VALUES (%s, %s)", (last_inserted_bid_id, astronaut_id))
-        mysql.connection.commit()
-        
-        return redirect(url_for("bidForMission"))
 
 @app.route("/view_bids", methods=["GET", "POST"])
 def viewBids():
