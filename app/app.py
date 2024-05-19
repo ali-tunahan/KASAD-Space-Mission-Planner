@@ -284,14 +284,12 @@ def createMission():
         num_of_astronauts = request.form.get('num_of_astronauts')
         payload_volume = request.form.get('payload_volume')
         payload_weight = request.form.get('payload_weight')
-        required_training = request.form.get('required_trainings')
+        required_trainings = request.form.getlist('required_trainings[]') 
         
         if not title or not description or not objectives or not launch_date or not duration or not num_of_astronauts or not payload_volume or not payload_weight:
-            flash("Fill all the necessary fields.", 'error')
             return render_template("create_mission.html", trainings=trainings)
         
         if datetime.strptime(launch_date, '%Y-%m-%d') < datetime.now():
-            flash("Launch date must be in the future.", 'error')
             return render_template("create_mission.html", trainings=trainings)
 
         mission_id = uuid.uuid4().hex
@@ -300,17 +298,18 @@ def createMission():
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', (mission_id, session.get('company_id'), title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight))
         
-        if required_training and required_training != "":
-            cursor.execute('''
-                INSERT INTO Mission_Requires_Training (mission_id, training_id)
-                VALUES (%s, %s)
-            ''', (mission_id, required_training))
+        for training_id in required_trainings:
+            if training_id:  
+                cursor.execute('''
+                    INSERT INTO Mission_Requires_Training (mission_id, training_id)
+                    VALUES (%s, %s)
+                ''', (mission_id, training_id))
         
         mysql.connection.commit()
-        flash("Mission created successfully!", 'success')
         return redirect(url_for('main'))
 
     return render_template("create_mission.html", trainings=trainings)
+
 
 @app.route("/manage_astronauts", methods=["GET", "POST", "DELETE"])
 def manageAstronauts():
@@ -523,7 +522,6 @@ def assignTrainings():
 
         except Exception as e:
             print("Error executing SQL query:", e)
-            flash('An error occurred while processing the request', 'alert')
 
         return redirect(url_for('assignTrainings'))  # Redirect to the same page after processing
     
@@ -538,6 +536,7 @@ def bidForMission():
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
     if request.method == "GET":
+
         # Fetch min and max values for filters
         cursor.execute("SELECT MIN(launch_date) as min_date, MAX(launch_date) as max_date FROM Mission")
         launch_date_range = cursor.fetchone()
@@ -582,10 +581,10 @@ def bidForMission():
         
         print(astronauts)
 
+
         return render_template("bid_for_mission.html", missions=missions, launch_date_range=launch_date_range, duration_range=duration_range, volume_range=volume_range, weight_range=weight_range, astronauts=astronauts)
 
     elif request.method == "POST":
-        mission_id = request.form.get("mission_id")
         bid_amount = request.form.get("bid_amount")
         astronaut_ids = request.form.getlist("astronaut_ids")
 

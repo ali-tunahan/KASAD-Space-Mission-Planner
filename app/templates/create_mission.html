@@ -1,7 +1,7 @@
 {% extends "master.html" %} {% block content %}
 <div class="container mt-5">
     <h1>Create A Space Mission</h1>
-    <form method="post">
+    <form method="POST">
         <div class="mb-4">
             <label for="title" class="form-label">Title of the Mission</label>
             <input type="text" class="form-control" id="title" name="title" placeholder="Enter the desired name for the mission" required>
@@ -39,15 +39,16 @@
             <textarea class="form-control" id="unwanted_situations" name="unwanted_situations" rows="3" placeholder="Describe any potential unwanted situations and how they should be handled."></textarea>
         </div>
         <div class="mb-4">
-            <label for="required_trainings" class="form-label">Required Trainings</label>
-            <select class="form-control" id="required_trainings" name="required_trainings">
-                <option value="">No Training</option>
-                {% for training in trainings %}
-                <option value="{{ training.training_id }}">{{ training.name }}</option>
-                {% endfor %}
-            </select>
-        </div>        
+            <label class="form-label">Required Trainings</label>
+            {% for training in trainings %}
+            <div>
+                <input type="checkbox" id="training_{{ training.training_id }}" name="required_trainings[]" value="{{ training.training_id }}">
+                <label for="training_{{ training.training_id }}">{{ training.name }}</label>
+            </div>
+            {% endfor %}
+        </div>  
         <button type="submit" class="btn btn-primary">Create Mission</button>
     </form>
 </div>
+
 {% endblock %}
