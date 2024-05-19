@@ -199,7 +199,7 @@ def register():
             random_uuid = uuid.uuid4()
             cursor.execute('INSERT INTO User (id, email, password) VALUES (%s, % s, % s)', (str(random_uuid), email, password,))
             mysql.connection.commit()
-            
+
             if account_type == 'Astronaut':
                 title = request.form.get('title')
                 first_name = request.form.get('first_name')
@@ -265,6 +265,7 @@ def register():
 
 @app.route("/create_mission", methods=["GET", "POST"])
 def createMission():
+    user_id = get_user_id()
     redirect_if_not_logged_in = check_logged_in()
     redirect_if_not_company = company_pageguard()
     
@@ -285,26 +286,27 @@ def createMission():
         payload_volume = request.form.get('payload_volume')
         payload_weight = request.form.get('payload_weight')
         required_trainings = request.form.getlist('required_trainings[]') 
+ 
+        print(required_trainings)
         
         if not title or not description or not objectives or not launch_date or not duration or not num_of_astronauts or not payload_volume or not payload_weight:
+   
             return render_template("create_mission.html", trainings=trainings)
         
         if datetime.strptime(launch_date, '%Y-%m-%d') < datetime.now():
+            flash("Launch date must be in the future", 'error')
             return render_template("create_mission.html", trainings=trainings)
-
         mission_id = uuid.uuid4().hex
         cursor.execute('''
             INSERT INTO Mission (mission_id, employer_id, title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight) 
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ''', (mission_id, session.get('company_id'), title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight))
-        
+        ''', (mission_id, user_id, title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight))
         for training_id in required_trainings:
             if training_id:  
                 cursor.execute('''
                     INSERT INTO Mission_Requires_Training (mission_id, training_id)
                     VALUES (%s, %s)
                 ''', (mission_id, training_id))
-        
         mysql.connection.commit()
         return redirect(url_for('main'))
 
@@ -561,12 +563,13 @@ def bidForMission():
             WHERE MAB.bid_id IS NULL
         """
         params = []
+        
 
         if 'launch_date' in filter_params and filter_params['launch_date']:
             query += " AND launch_date = %s"
             params.append(filter_params['launch_date'])
         if 'duration' in filter_params and filter_params['duration']:
-            query += " AND duration <= %s"
+            query += " AND duration <= %d"
             params.append(filter_params['duration'])
         if 'volume' in filter_params and filter_params['volume']:
             query += " AND payload_volume <= %s"
@@ -574,9 +577,8 @@ def bidForMission():
         if 'weight' in filter_params and filter_params['weight']:
             query += " AND payload_weight <= %s"
             params.append(filter_params['weight'])
-            
         query += " GROUP BY M.mission_id"
-        
+
         cursor.execute(query, params)
         missions = cursor.fetchall()
         company_id = get_user_id()
@@ -590,7 +592,9 @@ def bidForMission():
     elif request.method == "POST":
         bid_amount = request.form.get("bid_amount")
         astronaut_ids = request.form.getlist("astronaut_ids")
-
+        mission_id = request.form.get("mission_id")
+        user_id = get_user_id()
+        print("MISSION ID IS", mission_id)
         try:
             bid_amount = float(bid_amount)
             if bid_amount <= 0:
@@ -598,13 +602,13 @@ def bidForMission():
                 return redirect(url_for("bidForMission"))
     
             # Check for scheduling conflicts before inserting the bid
-            cursor.execute("SELECT * FROM Mission where mission_id = %s",(mission_id,))
+            cursor.execute("SELECT * FROM Mission where mission_id = %s", (mission_id,))
             current_mission = cursor.fetchone()
             
             conflicts = []
             for astronaut_id in astronaut_ids:
                 cursor.execute("""
-            SELECT M.title,
+            SELECT M.title
             FROM Mission_Accepted_Bid MAB
             JOIN Mission M ON MAB.mission_id = M.mission_id
             JOIN Bid_Has_Astronaut BHA ON MAB.bid_id = BHA.bid_id
@@ -624,14 +628,17 @@ def bidForMission():
                         flash(f"Astronaut Name {conflict[0]} has a scheduling conflict with mission '{conflict[1]}'.", "error")
                     return redirect(url_for("bidForMission"))
 
-                # If no conflicts, proceed to insert the bid
-                bid_id = uuid.uuid4().hex
-                cursor.execute("INSERT INTO Bid (bid_id, mission_id, bidder_id, amount, bid_date, status) VALUES (%s, %s, %s, %s, CURDATE(), 'Open')", (bid_id, mission_id, session.get('company_id'), bid_amount))
-                mysql.connection.commit()
-    
-                for astronaut_id in astronaut_ids:
-                    cursor.execute("INSERT INTO Bid_Has_Astronaut (bid_id, id) VALUES (%s, %s)", (bid_id, astronaut_id))
-                mysql.connection.commit()
+            # If no conflicts, proceed to insert the bid
+            bid_id = uuid.uuid4().hex
+            cursor.execute("INSERT INTO Bid (bid_id, mission_id, bidder_id, amount, bid_date, status) VALUES (%s, %s, %s, %s, CURDATE(), 'Open')", (bid_id, mission_id, user_id, bid_amount))
+            mysql.connection.commit()
+            
+        
+            for astronaut_id in astronaut_ids:
+                cursor.execute("INSERT INTO Bid_Has_Astronaut (bid_id, id) VALUES (%s, %s)", (bid_id, astronaut_id))
+            mysql.connection.commit()
+            return redirect(url_for("bidForMission"))
+                
         except ValueError as e:
             mysql.connection.rollback()  # Rollback in case of any error
             flash(f"An error occurred: {str(e)}", "error")
@@ -661,10 +668,9 @@ def viewBids():
     
     current_company_id = get_user_id()
     cursor.execute('''
-        SELECT Bid.bid_id, Bid.amount, Bid.bid_date, Bid.status, Mission.title AS mission_title, Company.name AS company_name
+        SELECT Bid.bid_id, Bid.amount, Bid.bid_date, Bid.status, Mission.title AS mission_title, Company.name AS company_name, employer_id
         FROM Bid
-        INNER JOIN Mission_Accepted_Bid ON Bid.bid_id = Mission_Accepted_Bid.bid_id
-        INNER JOIN Mission ON Mission_Accepted_Bid.mission_id = Mission.mission_id
+        INNER JOIN Mission ON Bid.mission_id = Mission.mission_id
         INNER JOIN Bidder ON Bid.bidder_id = Bidder.id
         INNER JOIN Company ON Bidder.id = Company.id
         WHERE Mission.employer_id = %s
