@@ -39,53 +39,89 @@
   .modal-lg {
     max-width: 80%; /* Larger modal for better form display */
   }
+
+  option {
+    color: black;
+  }
 </style>
 
 <div class="container-fluid py-4 px-5">
-    <h1>Bid for a Mission</h1>
-  
-    <!-- Filter Form -->
-    <form method="GET" action="{{ url_for('bidForMission') }}">
-        <label for="launch_date">Launch Date:</label>
-        <input type="date" id="launch_date" name="launch_date" min="{{ launch_date_range.min_date }}" max="{{ launch_date_range.max_date }}">
-    
-        <label for="duration">Duration:</label>
-        <input type="number" id="duration" name="duration" min="{{ duration_range.min_duration }}" max="{{ duration_range.max_duration }}">
-    
-        <label for="volume">Payload Volume (cubic meters):</label>
-        <input type="number" id="volume" name="volume" min="{{ volume_range.min_volume }}" max="{{ volume_range.max_volume }}">
-    
-        <label for="weight">Payload Weight (kg):</label>
-        <input type="number" id="weight" name="weight" min="{{ weight_range.min_weight }}" max="{{ weight_range.max_weight }}">
-    
-        <button type="submit">Filter</button>
-    </form>
-    
-    {% for mission in missions %}
-    <div class="mission-item">
-      <div class="button-row">
-        <h5>{{ mission.title }}</h5>
-        <div class="buttons-right">
-          <button
-            type="button"
-            class="btn btn-info button-spacing"
-            data-bs-toggle="modal"
-            data-bs-target="#modal{{ mission.mission_id }}"
-          >
-            View Details
-          </button>
-          <button
-            type="button"
-            class="btn btn-success button-spacing"
-            data-bs-toggle="modal"
-            data-bs-target="#bidModal{{ mission.mission_id }}"
-          >
-            BID
-          </button>
-        </div>
+  <h1>Bid for a Mission</h1>
+
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %} {% for category, message in messages %}
+  <div class="alert alert-{{ category }}">{{ message }}</div>
+  {% endfor %} {% endif %} {% endwith %}
+  <!-- Filter Form -->
+  <form method="GET" action="{{ url_for('bidForMission') }}">
+    <label for="launch_date">Launch Date:</label>
+    <input
+      type="date"
+      id="launch_date"
+      name="launch_date"
+      min="{{ launch_date_range.min_date }}"
+      max="{{ launch_date_range.max_date }}"
+      value="{{ request.args.get('launch_date', '') }}"
+    />
+
+    <label for="duration">Duration (months):</label>
+    <input
+      type="number"
+      id="duration"
+      name="duration"
+      min="{{ duration_range.min_duration }}"
+      max="{{ duration_range.max_duration }}"
+      value="{{ request.args.get('duration', '') }}"
+    />
+
+    <label for="volume">Payload Volume (cubic meters):</label>
+    <input
+      type="number"
+      id="volume"
+      name="volume"
+      min="{{ volume_range.min_volume }}"
+      max="{{ volume_range.max_volume }}"
+      value="{{ request.args.get('volume', '') }}"
+    />
+
+    <label for="weight">Payload Weight (kg):</label>
+    <input
+      type="number"
+      id="weight"
+      name="weight"
+      min="{{ weight_range.min_weight }}"
+      max="{{ weight_range.max_weight }}"
+      value="{{ request.args.get('weight', '') }}"
+    />
+
+    <button type="submit">Filter</button>
+  </form>
+
+  {% for mission in missions %}
+  <div class="mission-item">
+    <div class="button-row">
+      <h5>{{ mission.title }}</h5>
+      <div class="buttons-right">
+        <button
+          type="button"
+          class="btn btn-info button-spacing"
+          data-bs-toggle="modal"
+          data-bs-target="#modal{{ mission.mission_id }}"
+        >
+          View Details
+        </button>
+        <button
+          type="button"
+          class="btn btn-success button-spacing"
+          data-bs-toggle="modal"
+          data-bs-target="#bidModal{{ mission.mission_id }}"
+        >
+          BID
+        </button>
       </div>
-      <p><strong>Description:</strong> {{ mission.description }}</p>
-    
+    </div>
+    <p><strong>Description:</strong> {{ mission.description }}</p>
+
     <!-- Modal -->
     <div
       class="modal fade"
@@ -187,7 +223,8 @@
                 >
                   {% for astronaut in astronauts %}
                   <option value="{{ astronaut.id }}">
-                    {{ astronaut.first_name }} {{ astronaut.last_name }}
+                    {{astronaut.rank}} {{ astronaut.first_name }} {{
+                    astronaut.last_name }}
                   </option>
                   {% endfor %}
                 </select>

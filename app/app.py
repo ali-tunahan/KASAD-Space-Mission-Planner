@@ -550,7 +550,12 @@ def bidForMission():
 
         # Prepare query based on filters
         filter_params = request.args
-        query = "SELECT * FROM Mission WHERE 1=1"
+        
+        query = """ SELECT M.*
+                    FROM Mission M
+                    LEFT JOIN Mission_Accepted_Bid MAB ON M.mission_id = MAB.mission_id
+                    WHERE MAB.bid_id IS NULL;
+                """
         params = []
 
         if 'launch_date' in filter_params and filter_params['launch_date']:
@@ -569,8 +574,10 @@ def bidForMission():
         cursor.execute(query, params)
         missions = cursor.fetchall()
         company_id = get_user_id()
-        cursor.execute("SELECT * FROM Astronaut WHERE company_id = %s ", (company_id,))
+        cursor.execute("SELECT * FROM Astronaut JOIN Person ON Astronaut.id = Person.id WHERE company_id = %s ", (company_id,))
         astronauts = cursor.fetchall()
+        
+        print(astronauts)
 
         return render_template("bid_for_mission.html", missions=missions, launch_date_range=launch_date_range, duration_range=duration_range, volume_range=volume_range, weight_range=weight_range, astronauts=astronauts)
 
@@ -592,23 +599,24 @@ def bidForMission():
             conflicts = []
             for astronaut_id in astronaut_ids:
                 cursor.execute("""
-            SELECT M.title
+            SELECT M.title,
             FROM Mission_Accepted_Bid MAB
             JOIN Mission M ON MAB.mission_id = M.mission_id
             JOIN Bid_Has_Astronaut BHA ON MAB.bid_id = BHA.bid_id
+            JOIN Person ON Person.id = BHA.id
             WHERE BHA.id = %s AND (
                 (M.launch_date BETWEEN %s AND DATE_ADD(%s, INTERVAL %s MONTH)) OR 
                 (DATE_ADD(M.launch_date, INTERVAL M.duration MONTH) BETWEEN %s AND DATE_ADD(%s, INTERVAL %s MONTH))
             )
         """, (astronaut_id, current_mission['launch_date'], current_mission['launch_date'], current_mission['duration'], current_mission['launch_date'], current_mission['launch_date'], current_mission['duration']))
-        
                 result = cursor.fetchone()
                 if result:
-                    conflicts.append((astronaut_id, result[0]))  # Append astronaut ID and mission title
+                    name =  result['title'] + " " + result['rank'] + " " + result['first_name'] + " " + result['last_name']
+                    conflicts.append((name, result['title']))  # Append astronaut ID and mission title
 
                 if conflicts:
                     for conflict in conflicts:
-                        flash(f"Astronaut ID {conflict[0]} has a scheduling conflict with mission '{conflict[1]}'.", "error")
+                        flash(f"Astronaut Name {conflict[0]} has a scheduling conflict with mission '{conflict[1]}'.", "error")
                     return redirect(url_for("bidForMission"))
 
                 # If no conflicts, proceed to insert the bid
@@ -645,7 +653,8 @@ def viewBids():
             except Exception as e:
                 flash(f'Error accepting bid: {str(e)}', 'error')
         return redirect(url_for('viewBids'))
-
+    
+    current_company_id = get_user_id()
     cursor.execute('''
         SELECT Bid.bid_id, Bid.amount, Bid.bid_date, Bid.status, Mission.title AS mission_title, Company.name AS company_name
         FROM Bid
@@ -653,8 +662,9 @@ def viewBids():
         INNER JOIN Mission ON Mission_Accepted_Bid.mission_id = Mission.mission_id
         INNER JOIN Bidder ON Bid.bidder_id = Bidder.id
         INNER JOIN Company ON Bidder.id = Company.id
+        WHERE Mission.employer_id = %s
         ORDER BY Bid.amount DESC
-    ''')
+    ''',(current_company_id,))
     bids = cursor.fetchall()
     return render_template("view_bids.html", bids=bids)
 
