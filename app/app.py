@@ -30,6 +30,20 @@ def check_logged_in():
         return redirect(url_for('login'))
     return None
 
+def save_admin_status():
+    user_id = session.get('userid')
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("""
+        SELECT 1 FROM Admin WHERE id = %s;
+    """, (user_id,))
+    admin_exists = cursor.fetchone()
+
+    if admin_exists:
+       session['isAdmin'] = True
+    else:
+        session['isAdmin'] = False
+
+
 def check_admin():
     print(session.get('loggedin'))
     if not session.get('loggedin'):
@@ -105,6 +119,8 @@ def login():
             company = cursor.fetchone()
             cursor.execute('SELECT * FROM Astronaut WHERE id = %s', (user['id'],))
             astronaut = cursor.fetchone()
+            save_admin_status()
+            
             if(company):
                 session['accounttype'] = 'company'
             elif(astronaut):
@@ -412,6 +428,9 @@ def logout():
     session.pop('loggedin', None)  # Remove 'loggedin' from session
     session.pop('userid', None)    # Optional: clear other session variables
     session.pop('email', None)     # Optional: clear other session variables
+    session.pop('isAdmin', None)
+    session.pop('accounttype', None)
+
     return redirect(url_for('login'))
 
 
@@ -545,10 +564,14 @@ def viewBids():
 @app.route("/admin_page", methods=["GET", "POST"])
 def admin():
     redirect_if_not_logged_in = check_logged_in()
-    redirect_if_not_admin = check_admin()
+    isAdmin= session.get('isAdmin')
     
-    if redirect_if_not_logged_in or redirect_if_not_admin:
-        return redirect_if_not_admin
+    if redirect_if_not_logged_in :
+        return redirect_if_not_logged_in
+    
+    if not isAdmin:
+        return redirect(url_for('main'))
+  
     
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
