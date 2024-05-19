@@ -256,11 +256,9 @@ def createMission():
         required_trainings = request.form.getlist('required_trainings[]') 
         
         if not title or not description or not objectives or not launch_date or not duration or not num_of_astronauts or not payload_volume or not payload_weight:
-            flash("Fill all the necessary fields.", 'error')
             return render_template("create_mission.html", trainings=trainings)
         
         if datetime.strptime(launch_date, '%Y-%m-%d') < datetime.now():
-            flash("Launch date must be in the future.", 'error')
             return render_template("create_mission.html", trainings=trainings)
 
         mission_id = uuid.uuid4().hex
@@ -277,7 +275,6 @@ def createMission():
                 ''', (mission_id, training_id))
         
         mysql.connection.commit()
-        flash("Mission created successfully!", 'success')
         return redirect(url_for('main'))
 
     return render_template("create_mission.html", trainings=trainings)
@@ -490,7 +487,6 @@ def assignTrainings():
 
         except Exception as e:
             print("Error executing SQL query:", e)
-            flash('An error occurred while processing the request', 'alert')
 
         return redirect(url_for('assignTrainings'))  # Redirect to the same page after processing
     
