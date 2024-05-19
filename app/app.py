@@ -155,6 +155,7 @@ def login():
             return redirect(url_for('main'))
         else:
             message = 'Please enter correct email / password !'
+            flash(message, 'error')
     return render_template('login.html', message = message)
 
 #TODO CHECK IF USER IS INSERTED EVEN THOUGH UNSUCCESFUL CREATION
@@ -173,11 +174,13 @@ def register():
 
         if not all([email, password]):
             message = 'Please fill out the form!'
+            flash(message, 'error')
             return render_template('register.html', message = message)
 
         # Validation for fields
         if len(password) > 6:
             message = 'Password must not exceed 6 characters.'
+            flash(message, 'error')
             return render_template('register.html', message=message)
 
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -187,9 +190,11 @@ def register():
 
         if account:
             message = 'Choose a different email!'
+            flash(message, 'error')
   
         elif not email or not password:
             message = 'Please fill out the form!'
+            flash(message, 'error')
 
         else:
             random_uuid = uuid.uuid4()
@@ -252,6 +257,7 @@ def register():
                     except Exception as e:
                         print("Error executing SQL query 4:", e)
                     message = 'User successfully created!'
+                    flash(message, 'success')
             session['loggedin'] = True
             session['userid'] = random_uuid
             session['email'] = email
