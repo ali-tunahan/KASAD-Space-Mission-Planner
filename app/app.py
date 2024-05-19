@@ -491,43 +491,50 @@ def assignTrainings():
     
 @app.route("/bid_for_mission", methods=["GET", "POST"])
 def bidForMission():
-    redirect_if_not_logged_in = check_logged_in()
-    redirect_if_not_company = company_pageguard()
-    
-    if redirect_if_not_logged_in or redirect_if_not_company:
-        return redirect_if_not_logged_in
-
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    if request.method == "GET":
-        cursor.execute("""
-        SELECT M.mission_id, M.title, M.description, M.launch_date, M.payload_volume, M.payload_weight, M.duration, 
-               B.bidder_id, C.id AS company_id, C.name AS company_name
-        FROM Mission M
-        LEFT JOIN Mission_Accepted_Bid MAB ON M.mission_id = MAB.mission_id
-        LEFT JOIN Bid B ON MAB.bid_id = B.bid_id
-        LEFT JOIN Bidder BD ON B.bidder_id = BD.id
-        LEFT JOIN Company C ON BD.id = C.id
-        """)
-        missions = cursor.fetchall()
-        for mission in missions:
-            if mission['launch_date']:
-                mission['launch_date'] = mission['launch_date'].strftime('%Y-%m-%d')
-        
-        # Assuming you also want to list astronauts for bidding, ensure you fetch them correctly
-        company_id = session.get('company_id')  # Assumes you store company_id in session upon login
-        cursor.execute("SELECT * FROM Astronaut WHERE company_id = %s", (company_id,))
-        astronauts = cursor.fetchall()
-
-        return render_template("bid_for_mission.html", missions=missions, astronauts=astronauts)
     
+    if request.method == "GET":
+        # Fetch min and max values for filters
+        cursor.execute("SELECT MIN(launch_date) as min_date, MAX(launch_date) as max_date FROM Mission")
+        launch_date_range = cursor.fetchone()
+        
+        cursor.execute("SELECT MIN(duration) as min_duration, MAX(duration) as max_duration FROM Mission")
+        duration_range = cursor.fetchone()
+        
+        cursor.execute("SELECT MIN(payload_volume) as min_volume, MAX(payload_volume) as max_volume FROM Mission")
+        volume_range = cursor.fetchone()
+        
+        cursor.execute("SELECT MIN(payload_weight) as min_weight, MAX(payload_weight) as max_weight FROM Mission")
+        weight_range = cursor.fetchone()
+
+        # Prepare query based on filters
+        filter_params = request.args
+        query = "SELECT * FROM Mission WHERE 1=1"
+        params = []
+
+        if 'launch_date' in filter_params and filter_params['launch_date']:
+            query += " AND launch_date = %s"
+            params.append(filter_params['launch_date'])
+        if 'duration' in filter_params and filter_params['duration']:
+            query += " AND duration <= %s"
+            params.append(filter_params['duration'])
+        if 'volume' in filter_params and filter_params['volume']:
+            query += " AND payload_volume <= %s"
+            params.append(filter_params['volume'])
+        if 'weight' in filter_params and filter_params['weight']:
+            query += " AND payload_weight <= %s"
+            params.append(filter_params['weight'])
+        
+        cursor.execute(query, params)
+        missions = cursor.fetchall()
+
+        return render_template("bid_for_mission.html", missions=missions, launch_date_range=launch_date_range, duration_range=duration_range, volume_range=volume_range, weight_range=weight_range)
+
     elif request.method == "POST":
         mission_id = request.form.get("mission_id")
         bid_amount = request.form.get("bid_amount")
         astronaut_ids = request.form.getlist("astronaut_ids")
-        
-        # Debug print to check mission_id
-        print("Mission ID received:", mission_id)
-        
+
         try:
             bid_amount = float(bid_amount)
             if bid_amount <= 0:
@@ -546,7 +553,6 @@ def bidForMission():
         except ValueError:
             flash("Invalid bid amount. Please enter a valid number.", "error")
             return redirect(url_for("bidForMission"))
-
 
 @app.route("/view_bids", methods=["GET", "POST"])
 def viewBids():
