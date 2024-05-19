@@ -211,17 +211,16 @@ CREATE VIEW Astronaut_Stats AS
 SELECT 
     A.id AS astronaut_id,
     COUNT(MAB.mission_id) AS experience,
-    SUM(M.duration) / A.years_of_experience AS performance
+    COALESCE(SUM(M.duration) / NULLIF(A.years_of_experience, 0), 0) AS performance
 FROM 
     Astronaut A
-JOIN 
+LEFT JOIN 
     Bid_Has_Astronaut BHA ON A.id = BHA.id
-JOIN 
+LEFT JOIN 
     Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
-JOIN 
-    Mission M ON MAB.mission_id = M.mission_id
-WHERE 
-    DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
+LEFT JOIN 
+    Mission M ON MAB.mission_id = M.mission_id 
+    AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
 GROUP BY 
     A.id;
 
