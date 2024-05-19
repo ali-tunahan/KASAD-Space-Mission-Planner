@@ -264,7 +264,6 @@ def register():
 
     return render_template('register.html', message = message, companies =  companies)
 
-
 @app.route("/create_mission", methods=["GET", "POST"])
 def createMission():
     redirect_if_not_logged_in = check_logged_in()
@@ -273,8 +272,11 @@ def createMission():
     if redirect_if_not_logged_in or redirect_if_not_company:
         return redirect_if_not_logged_in
     
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT training_id, name FROM Training")
+    trainings = cursor.fetchall()
+    
     if request.method == "POST":
-        # Extract data from form
         title = request.form.get('title')
         description = request.form.get('description')
         objectives = request.form.get('objectives')
@@ -283,32 +285,33 @@ def createMission():
         num_of_astronauts = request.form.get('num_of_astronauts')
         payload_volume = request.form.get('payload_volume')
         payload_weight = request.form.get('payload_weight')
+        required_training = request.form.get('required_trainings')
         
-        # Data validation
         if not title or not description or not objectives or not launch_date or not duration or not num_of_astronauts or not payload_volume or not payload_weight:
             flash("Fill all the necessary fields.", 'error')
-            return render_template("create_mission.html")
+            return render_template("create_mission.html", trainings=trainings)
         
-        # Check date is in the future
         if datetime.strptime(launch_date, '%Y-%m-%d') < datetime.now():
             flash("Launch date must be in the future.", 'error')
-            return render_template("create_mission.html")
+            return render_template("create_mission.html", trainings=trainings)
 
-        # Insert data into the database
-        try:
-            cursor = mysql.connection.cursor()
-            cursor.execute('''
-                INSERT INTO Mission (mission_id, employer_id, title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ''', (uuid.uuid4().hex, session.get('company_id'), title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight))
-            mysql.connection.commit()
-            flash("Mission created successfully!", 'success')
-            return redirect(url_for('main'))  # Redirect to the main page or a confirmation page
+        mission_id = uuid.uuid4().hex
+        cursor.execute('''
+            INSERT INTO Mission (mission_id, employer_id, title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (mission_id, session.get('company_id'), title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight))
         
-        except Exception as e:
-            print("Error executing SQL query:", e)
-            return render_template("create_mission.html")
-    return render_template("create_mission.html")
+        if required_training and required_training != "":
+            cursor.execute('''
+                INSERT INTO Mission_Requires_Training (mission_id, training_id)
+                VALUES (%s, %s)
+            ''', (mission_id, required_training))
+        
+        mysql.connection.commit()
+        flash("Mission created successfully!", 'success')
+        return redirect(url_for('main'))
+
+    return render_template("create_mission.html", trainings=trainings)
 
 @app.route("/manage_astronauts", methods=["GET", "POST", "DELETE"])
 def manageAstronauts():
@@ -381,14 +384,15 @@ def manageAstronauts():
                     ) AS total_missions_count
                     FROM Astronaut A NATURAL JOIN Person P NATURAL JOIN Astronaut_Age AA JOIN Astronaut_Stats AS A_stats ON AA.id=A_stats.astronaut_id
                     WHERE
-                    A.company_id = %s AND
+                    (P.first_name LIKE %s AND P.middle_name LIKE %s AND P.last_name LIKE %s) AND            
+                    A.company_id = %s AND          
                     (%s = '' OR A.date_of_birth >= %s) AND
                     (%s = '' OR A.date_of_birth <= %s) AND
                     (%s = '' OR A.nationality = %s) AND
                     (%s = '' OR A.rank = %s) AND
                     (%s = '' OR A.years_of_experience >= %s) AND
                     (%s = '' OR A.years_of_experience <= %s) ''', 
-                    (companyId, companyId, companyId, request.args.get('dateOfBirthLower'), request.args.get('dateOfBirthLower'), 
+                    (companyId, companyId,'%%'+ request.args.get('name')+'%%', '%%'+ request.args.get('Mname')+'%%','%%'+ request.args.get('Lname')+'%%',companyId, request.args.get('dateOfBirthLower'), request.args.get('dateOfBirthLower'), 
                     request.args.get('dateOfBirthUpper'), request.args.get('dateOfBirthUpper'), 
                     request.args.get('nationalityFilter'), request.args.get('nationalityFilter'), 
                     request.args.get('rankFilter'), request.args.get('rankFilter'),
@@ -550,7 +554,12 @@ def bidForMission():
 
         # Prepare query based on filters
         filter_params = request.args
-        query = "SELECT * FROM Mission WHERE 1=1"
+        
+        query = """ SELECT M.*
+                    FROM Mission M
+                    LEFT JOIN Mission_Accepted_Bid MAB ON M.mission_id = MAB.mission_id
+                    WHERE MAB.bid_id IS NULL;
+                """
         params = []
 
         if 'launch_date' in filter_params and filter_params['launch_date']:
@@ -569,8 +578,10 @@ def bidForMission():
         cursor.execute(query, params)
         missions = cursor.fetchall()
         company_id = get_user_id()
-        cursor.execute("SELECT * FROM Astronaut WHERE company_id = %s ", (company_id,))
+        cursor.execute("SELECT * FROM Astronaut JOIN Person ON Astronaut.id = Person.id WHERE company_id = %s ", (company_id,))
         astronauts = cursor.fetchall()
+        
+        print(astronauts)
 
         return render_template("bid_for_mission.html", missions=missions, launch_date_range=launch_date_range, duration_range=duration_range, volume_range=volume_range, weight_range=weight_range, astronauts=astronauts)
 
@@ -592,23 +603,24 @@ def bidForMission():
             conflicts = []
             for astronaut_id in astronaut_ids:
                 cursor.execute("""
-            SELECT M.title
+            SELECT M.title,
             FROM Mission_Accepted_Bid MAB
             JOIN Mission M ON MAB.mission_id = M.mission_id
             JOIN Bid_Has_Astronaut BHA ON MAB.bid_id = BHA.bid_id
+            JOIN Person ON Person.id = BHA.id
             WHERE BHA.id = %s AND (
                 (M.launch_date BETWEEN %s AND DATE_ADD(%s, INTERVAL %s MONTH)) OR 
                 (DATE_ADD(M.launch_date, INTERVAL M.duration MONTH) BETWEEN %s AND DATE_ADD(%s, INTERVAL %s MONTH))
             )
         """, (astronaut_id, current_mission['launch_date'], current_mission['launch_date'], current_mission['duration'], current_mission['launch_date'], current_mission['launch_date'], current_mission['duration']))
-        
                 result = cursor.fetchone()
                 if result:
-                    conflicts.append((astronaut_id, result[0]))  # Append astronaut ID and mission title
+                    name =  result['title'] + " " + result['rank'] + " " + result['first_name'] + " " + result['last_name']
+                    conflicts.append((name, result['title']))  # Append astronaut ID and mission title
 
                 if conflicts:
                     for conflict in conflicts:
-                        flash(f"Astronaut ID {conflict[0]} has a scheduling conflict with mission '{conflict[1]}'.", "error")
+                        flash(f"Astronaut Name {conflict[0]} has a scheduling conflict with mission '{conflict[1]}'.", "error")
                     return redirect(url_for("bidForMission"))
 
                 # If no conflicts, proceed to insert the bid
@@ -645,7 +657,8 @@ def viewBids():
             except Exception as e:
                 flash(f'Error accepting bid: {str(e)}', 'error')
         return redirect(url_for('viewBids'))
-
+    
+    current_company_id = get_user_id()
     cursor.execute('''
         SELECT Bid.bid_id, Bid.amount, Bid.bid_date, Bid.status, Mission.title AS mission_title, Company.name AS company_name
         FROM Bid
@@ -653,8 +666,9 @@ def viewBids():
         INNER JOIN Mission ON Mission_Accepted_Bid.mission_id = Mission.mission_id
         INNER JOIN Bidder ON Bid.bidder_id = Bidder.id
         INNER JOIN Company ON Bidder.id = Company.id
+        WHERE Mission.employer_id = %s
         ORDER BY Bid.amount DESC
-    ''')
+    ''',(current_company_id,))
     bids = cursor.fetchall()
     return render_template("view_bids.html", bids=bids)
 
