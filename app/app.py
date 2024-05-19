@@ -45,6 +45,10 @@ def save_admin_status():
 
 
 def check_admin():
+    redirect_if_not_logged_in = check_logged_in()
+    
+    if redirect_if_not_logged_in:
+        return redirect_if_not_logged_in
     print(session.get('loggedin'))
     if not session.get('loggedin'):
         print("Not logged in")
@@ -99,6 +103,7 @@ def get_user_id():
 @app.route("/")
 @app.route("/main", methods=["GET", "POST"])
 def main():
+    
     user_id = get_user_id()
     
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
