@@ -99,8 +99,32 @@ def get_user_id():
 @app.route("/")
 @app.route("/main", methods=["GET", "POST"])
 def main():
-    message = "CU"
-    return render_template("main.html", message=message)
+    user_id = get_user_id()
+    
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    type = check_account_type()
+    
+    #Init all passed parameter, else gives error
+    company = None
+    person = None
+    astronaut = None
+    
+    if(type == "company"):
+        cursor.execute("SELECT * FROM Company WHERE id = %s", (user_id,))
+        company = cursor.fetchone()
+    elif(type == 'astronaut'):
+        cursor.execute("SELECT * FROM Person WHERE id = %s", (user_id,))
+        person = cursor.fetchone()
+    
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT * FROM Astronaut WHERE id = %s", (user_id,))
+        astronaut = cursor.fetchone()
+        print(astronaut)
+        cursor.execute("SELECT * FROM Company WHERE id = %s", (astronaut['company_id'],))
+        company = cursor.fetchone()
+    
+    return render_template("main.html", person = person, company=company, astronaut = astronaut)
 
 @app.route('/login', methods =['GET', 'POST'])
 def login():
@@ -435,7 +459,8 @@ def logout():
     session.pop('email', None)     # Optional: clear other session variables
     session.pop('isAdmin', None)
     session.pop('accounttype', None)
-
+    
+    flash("Logged out successfully!", 'success')
     return redirect(url_for('login'))
 
 
