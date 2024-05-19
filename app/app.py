@@ -383,14 +383,15 @@ def manageAstronauts():
                     ) AS total_missions_count
                     FROM Astronaut A NATURAL JOIN Person P NATURAL JOIN Astronaut_Age AA JOIN Astronaut_Stats AS A_stats ON AA.id=A_stats.astronaut_id
                     WHERE
-                    A.company_id = %s AND
+                    (P.first_name LIKE %s AND P.middle_name LIKE %s AND P.last_name LIKE %s) AND            
+                    A.company_id = %s AND          
                     (%s = '' OR A.date_of_birth >= %s) AND
                     (%s = '' OR A.date_of_birth <= %s) AND
                     (%s = '' OR A.nationality = %s) AND
                     (%s = '' OR A.rank = %s) AND
                     (%s = '' OR A.years_of_experience >= %s) AND
                     (%s = '' OR A.years_of_experience <= %s) ''', 
-                    (companyId, companyId, companyId, request.args.get('dateOfBirthLower'), request.args.get('dateOfBirthLower'), 
+                    (companyId, companyId,'%%'+ request.args.get('name')+'%%', '%%'+ request.args.get('Mname')+'%%','%%'+ request.args.get('Lname')+'%%',companyId, request.args.get('dateOfBirthLower'), request.args.get('dateOfBirthLower'), 
                     request.args.get('dateOfBirthUpper'), request.args.get('dateOfBirthUpper'), 
                     request.args.get('nationalityFilter'), request.args.get('nationalityFilter'), 
                     request.args.get('rankFilter'), request.args.get('rankFilter'),
