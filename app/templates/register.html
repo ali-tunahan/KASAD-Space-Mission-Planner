@@ -1,4 +1,12 @@
 {% extends "base.html" %} {% block content%}
+
+<style>
+  .alert {
+    font-size: 10px;
+    color: red;
+  }
+</style>
+
 <div class="container mt-5">
   <h2>Register</h2>
   <form
@@ -89,14 +97,19 @@
       </div>
       <div class="mb-3">
         <label for="companySelect" class="form-label">Select Company</label>
-        <select class="form-control" id="companySelect" name="company_id" required>
-            <option value="">Please select a company</option>
-            {% for company in companies %}
-            <option value="{{ company['id'] }}">{{ company['name'] }}</option>
-            {% endfor %}
+        <select
+          class="form-control"
+          id="companySelect"
+          name="company_id"
+          required
+        >
+          <option value="">Please select a company</option>
+          {% for company in companies %}
+          <option value="{{ company['id'] }}">{{ company['name'] }}</option>
+          {% endfor %}
         </select>
         <div class="invalid-feedback">Please select a company.</div>
-    </div>
+      </div>
       <div class="mb-3">
         <label for="dobInput" class="form-label">Date of Birth</label>
         <input
@@ -255,8 +268,13 @@
         />
       </div>
     </div>
-
-    <button type="submit" method="post" class="btn btn-primary">Register</button>
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %} {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %} {% endif %} {% endwith %}
+    <button type="submit" method="post" class="btn btn-primary">
+      Register
+    </button>
   </form>
   <div class="text-center mt-3">
     <p>Already have an account? <a href="/login">Login</a></p>
@@ -341,8 +359,7 @@
       employerInputFields.forEach((field) => {
         field.required = false;
       });
-    }
-    else{
+    } else {
       const employerInputFields = document.querySelectorAll(
         "#employerFields input"
       );
@@ -358,8 +375,7 @@
       bidderInputFields.forEach((field) => {
         field.required = false;
       });
-    }
-    else{
+    } else {
       const bidderInputFields = document.querySelectorAll(
         "#bidderFields input"
       );
@@ -372,7 +388,6 @@
     if (accountType === "Astronaut") {
       document.getElementById("astronautFields").classList.remove("d-none");
     } else if (accountType === "Company") {
-      
       document.getElementById("companyFields").classList.remove("d-none");
     }
   }

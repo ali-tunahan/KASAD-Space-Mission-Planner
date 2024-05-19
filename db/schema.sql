@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS Bidder (
 
 CREATE TABLE IF NOT EXISTS Bid (
     bid_id CHAR(36) PRIMARY KEY,
+    mission_id CHAR(36),
     bidder_id CHAR(36),
     amount DECIMAL(19, 4),
     bid_date DATE,
@@ -211,17 +212,16 @@ CREATE VIEW Astronaut_Stats AS
 SELECT 
     A.id AS astronaut_id,
     COUNT(MAB.mission_id) AS experience,
-    SUM(M.duration) / A.years_of_experience AS performance
+    COALESCE(SUM(M.duration) / NULLIF(A.years_of_experience, 0), 0) AS performance
 FROM 
     Astronaut A
-JOIN 
+LEFT JOIN 
     Bid_Has_Astronaut BHA ON A.id = BHA.id
-JOIN 
+LEFT JOIN 
     Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
-JOIN 
-    Mission M ON MAB.mission_id = M.mission_id
-WHERE 
-    DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
+LEFT JOIN 
+    Mission M ON MAB.mission_id = M.mission_id 
+    AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
 GROUP BY 
     A.id;
 
@@ -341,10 +341,10 @@ INSERT INTO Bidder (id, specialization) VALUES
 ('55555555-5555-5555-5555-555555555555', 'Propulsion Systems'),
 ('66666666-6666-6666-6666-666666666666', 'Spacecraft Design');
 
-INSERT INTO Bid (bid_id, bidder_id, amount, bid_date, status) VALUES
-('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1', '44444444-4444-4444-4444-444444444444', 500000.00, '2023-04-01', 'Open'),
-('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2', '55555555-5555-5555-5555-555555555555', 750000.00, '2023-04-01', 'Open'),
-('c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3', '66666666-6666-6666-6666-666666666666', 600000.00, '2023-04-01', 'Open');
+INSERT INTO Bid (bid_id, mission_id, bidder_id, amount, bid_date, status) VALUES
+('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1','d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4' ,'44444444-4444-4444-4444-444444444444', 500000.00, '2023-04-01', 'Accepted'),
+('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2','d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4' ,'55555555-5555-5555-5555-555555555555', 750000.00, '2023-04-01', 'Accepted'),
+('c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3','e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5' ,'66666666-6666-6666-6666-666666666666', 600000.00, '2023-04-01', 'Accepted');
 
 INSERT INTO Employer (id, industry) VALUES
 ('44444444-4444-4444-4444-444444444444', 'Aerospace'),
