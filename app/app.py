@@ -253,7 +253,7 @@ def createMission():
         num_of_astronauts = request.form.get('num_of_astronauts')
         payload_volume = request.form.get('payload_volume')
         payload_weight = request.form.get('payload_weight')
-        required_training = request.form.get('required_trainings')
+        required_trainings = request.form.getlist('required_trainings[]') 
         
         if not title or not description or not objectives or not launch_date or not duration or not num_of_astronauts or not payload_volume or not payload_weight:
             flash("Fill all the necessary fields.", 'error')
@@ -269,17 +269,19 @@ def createMission():
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', (mission_id, session.get('company_id'), title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight))
         
-        if required_training and required_training != "":
-            cursor.execute('''
-                INSERT INTO Mission_Requires_Training (mission_id, training_id)
-                VALUES (%s, %s)
-            ''', (mission_id, required_training))
+        for training_id in required_trainings:
+            if training_id:  
+                cursor.execute('''
+                    INSERT INTO Mission_Requires_Training (mission_id, training_id)
+                    VALUES (%s, %s)
+                ''', (mission_id, training_id))
         
         mysql.connection.commit()
         flash("Mission created successfully!", 'success')
         return redirect(url_for('main'))
 
     return render_template("create_mission.html", trainings=trainings)
+
 
 @app.route("/manage_astronauts", methods=["GET", "POST", "DELETE"])
 def manageAstronauts():
