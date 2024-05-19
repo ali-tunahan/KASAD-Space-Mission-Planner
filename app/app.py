@@ -491,6 +491,12 @@ def assignTrainings():
     
 @app.route("/bid_for_mission", methods=["GET", "POST"])
 def bidForMission():
+    redirect_if_not_logged_in = check_logged_in()
+    redirect_if_not_company = company_pageguard()
+    
+    if redirect_if_not_logged_in or redirect_if_not_company:
+        return redirect_if_not_logged_in
+    
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
     if request.method == "GET":
