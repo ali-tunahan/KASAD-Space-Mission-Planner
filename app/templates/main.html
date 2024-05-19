@@ -1,7 +1,34 @@
-{% extends "master.html" %} {% block title %} Main Page {% endblock %} {% block
+{% extends "master.html" %} {% block title %}Main Page{% endblock %} {% block
 content %}
 <div class="text-center mt-5">
   <h1 class="display-1">Welcome to KASAD</h1>
-  <h2 class="mb-4">{{ company['name']}}</h2>
+
+  {% if person %}
+  <h2>Your Employer:</h2>
+  {%endif%} {% if company %}
+  <h2 class="mb-4">{{ company['name'] }}</h2>
+  <div class="mb-3">
+    Address: {{ company['street'] }}, {{ company['city'] }}, {{ company['state']
+    }} {{ company['postal_code'] }}
+  </div>
+  <div class="mb-3">Founded on: {{ company['founding_date'] }}</div>
+  <div class="mb-3">
+    Phone: ({{ company['area_code'] }}) {{ company['phone_number'] }}
+  </div>
+  <div class="mb-3">Balance: ${{ company['balance'] }}</div>
+  {% endif %} {% if person %}
+  <h2 class="mb-4">
+    {{ [person['title'] or '', person['first_name'] or '', person['middle_name']
+    or '', person['last_name'] or '']|reject('equalto', '')|join(' ') }}
+  </h2>
+  {% endif %} {% if astronaut %}
+  <h2 class="mb-4">Astronaut Details</h2>
+  <div class="mb-3">Date of Birth: {{ astronaut['date_of_birth'] }}</div>
+  <div class="mb-3">Nationality: {{ astronaut['nationality'] }}</div>
+  <div class="mb-3">Rank: {{ astronaut['rank'] }}</div>
+  <div class="mb-3">
+    Years of Experience: {{ astronaut['years_of_experience'] }}
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
