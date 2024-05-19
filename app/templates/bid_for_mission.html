@@ -50,7 +50,7 @@ Bid for a Mission
     {% for mission in missions %}
     <div class="mission-item">
         <div class="button-row">
-            <h5>{{ mission.title }}</h5>
+            <h5>{{ mission.title }} (Mission ID: {{ mission.mission_id }})</h5>
             <div class="buttons-right">
                 <button type="button" class="btn btn-info button-spacing" data-bs-toggle="modal" data-bs-target="#modal{{ mission.mission_id }}">
                     View Details
@@ -61,6 +61,7 @@ Bid for a Mission
             </div>
         </div>
         <p><strong>Description:</strong> {{ mission.description }}</p>
+        <p><strong>Submitted by:</strong> {{ mission.company_name }} (Company ID: {{ mission.company_id }})</p>
   
       <!-- Modal -->
         <div class="modal fade" id="modal{{ mission.mission_id }}" tabindex="-1" aria-labelledby="modalLabel{{ mission.mission_id }}" aria-hidden="true">
@@ -75,6 +76,7 @@ Bid for a Mission
                     <p><strong>Payload Volume:</strong> {{ mission.payload_volume }} cubic meters</p>
                     <p><strong>Payload Weight:</strong> {{ mission.payload_weight }} kg</p>
                     <p><strong>Duration:</strong> {{ mission.duration }} months</p>
+                    <p><strong>Company Name:</strong> {{ mission.company_name }}</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -109,7 +111,7 @@ Bid for a Mission
                                 <button type="submit" class="btn btn-primary">Submit Bid</button>
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                             </div>
-                        </form>
+                        </form>                        
                     </div>
                 </div>
             </div>
