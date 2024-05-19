@@ -300,7 +300,7 @@ def createMission():
         cursor.execute('''
             INSERT INTO Mission (mission_id, employer_id, title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight) 
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ''', (mission_id, session.get('user_id'), title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight))
+        ''', (mission_id, user_id, title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight))
         for training_id in required_trainings:
             if training_id:  
                 cursor.execute('''
@@ -670,6 +670,7 @@ def viewBids():
         INNER JOIN Mission ON Bid.mission_id = Mission.mission_id
         INNER JOIN Bidder ON Bid.bidder_id = Bidder.id
         INNER JOIN Company ON Bidder.id = Company.id
+        WHERE Mission.employer_id = %s
         ORDER BY Bid.amount DESC
     ''',(current_company_id,))
     bids = cursor.fetchall()
