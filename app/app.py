@@ -342,13 +342,13 @@ def manageAstronauts():
                     JOIN Mission M ON MAB.mission_id = M.mission_id
                     WHERE BHA.id = A.id
                     AND A.company_id = %s
-                    AND (M.launch_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) OR DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE())
+                    AND (M.launch_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) OR DATE_ADD(M.launch_date, INTERVAL M.duration MONTH) >= CURDATE())
                     ) AS filtered_missions_count,
                     (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
                     JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
                     JOIN Mission M ON MAB.mission_id = M.mission_id
                     WHERE BHA.id = A.id AND A.company_id = %s
-                    AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
+                    AND DATE_ADD(M.launch_date, INTERVAL M.duration MONTH) >= CURDATE()
                     ) AS total_missions_count
                     FROM Astronaut A NATURAL JOIN Person P NATURAL JOIN Astronaut_Age AS AA JOIN Astronaut_Stats AS A_stats ON AA.id=A_stats.astronaut_id
                     WHERE
@@ -371,13 +371,13 @@ def manageAstronauts():
                     JOIN Mission M ON MAB.mission_id = M.mission_id
                     WHERE BHA.id = A.id
                     AND A.company_id = %s
-                    AND (M.launch_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) OR DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE())
+                    AND (M.launch_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) OR DATE_ADD(M.launch_date, INTERVAL M.duration MONTH) >= CURDATE())
                     ) AS filtered_missions_count,
                     (SELECT COUNT(*) FROM Bid_Has_Astronaut BHA
                     JOIN Mission_Accepted_Bid MAB ON BHA.bid_id = MAB.bid_id
                     JOIN Mission M ON MAB.mission_id = M.mission_id
                     WHERE BHA.id = A.id AND A.company_id = %s
-                    AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) >= CURDATE()
+                    AND DATE_ADD(M.launch_date, INTERVAL M.duration MONTH) >= CURDATE()
                     ) AS total_missions_count
                     FROM Astronaut A NATURAL JOIN Person P NATURAL JOIN Astronaut_Age AA JOIN Astronaut_Stats AS A_stats ON AA.id=A_stats.astronaut_id
                     WHERE
@@ -568,8 +568,11 @@ def bidForMission():
         
         cursor.execute(query, params)
         missions = cursor.fetchall()
+        company_id = get_user_id()
+        cursor.execute("SELECT * FROM Astronaut WHERE company_id = %s ", (company_id,))
+        astronauts = cursor.fetchall()
 
-        return render_template("bid_for_mission.html", missions=missions, launch_date_range=launch_date_range, duration_range=duration_range, volume_range=volume_range, weight_range=weight_range)
+        return render_template("bid_for_mission.html", missions=missions, launch_date_range=launch_date_range, duration_range=duration_range, volume_range=volume_range, weight_range=weight_range, astronauts=astronauts)
 
     elif request.method == "POST":
         mission_id = request.form.get("mission_id")
@@ -581,18 +584,44 @@ def bidForMission():
             if bid_amount <= 0:
                 flash("Bid amount must be greater than $0.", "error")
                 return redirect(url_for("bidForMission"))
+    
+            # Check for scheduling conflicts before inserting the bid
+            cursor.execute("SELECT * FROM Mission where mission_id = %s",(mission_id,))
+            current_mission = cursor.fetchone()
             
-            bid_id = uuid.uuid4().hex
-            cursor.execute("INSERT INTO Bid (bid_id, bidder_id, amount, bid_date, status) VALUES (%s, %s, %s, CURDATE(), 'Open')", (bid_id, session.get('company_id'), bid_amount))
-            mysql.connection.commit()
+            conflicts = []
             for astronaut_id in astronaut_ids:
-                cursor.execute("INSERT INTO Bid_Has_Astronaut (bid_id, id) VALUES (%s, %s)", (bid_id, astronaut_id))
-            mysql.connection.commit()
-            
-            flash("Bid submitted successfully!", "success")
-            return redirect(url_for("bidForMission"))
+                cursor.execute("""
+            SELECT M.title
+            FROM Mission_Accepted_Bid MAB
+            JOIN Mission M ON MAB.mission_id = M.mission_id
+            JOIN Bid_Has_Astronaut BHA ON MAB.bid_id = BHA.bid_id
+            WHERE BHA.id = %s AND (
+                (M.launch_date BETWEEN %s AND DATE_ADD(%s, INTERVAL %s MONTH)) OR 
+                (DATE_ADD(M.launch_date, INTERVAL M.duration MONTH) BETWEEN %s AND DATE_ADD(%s, INTERVAL %s MONTH))
+            )
+        """, (astronaut_id, current_mission['launch_date'], current_mission['launch_date'], current_mission['duration'], current_mission['launch_date'], current_mission['launch_date'], current_mission['duration']))
+        
+                result = cursor.fetchone()
+                if result:
+                    conflicts.append((astronaut_id, result[0]))  # Append astronaut ID and mission title
+
+                if conflicts:
+                    for conflict in conflicts:
+                        flash(f"Astronaut ID {conflict[0]} has a scheduling conflict with mission '{conflict[1]}'.", "error")
+                    return redirect(url_for("bidForMission"))
+
+                # If no conflicts, proceed to insert the bid
+                bid_id = uuid.uuid4().hex
+                cursor.execute("INSERT INTO Bid (bid_id, mission_id, bidder_id, amount, bid_date, status) VALUES (%s, %s, %s, %s, CURDATE(), 'Open')", (bid_id, mission_id, session.get('company_id'), bid_amount))
+                mysql.connection.commit()
+    
+                for astronaut_id in astronaut_ids:
+                    cursor.execute("INSERT INTO Bid_Has_Astronaut (bid_id, id) VALUES (%s, %s)", (bid_id, astronaut_id))
+                mysql.connection.commit()
         except ValueError:
-            flash("Invalid bid amount. Please enter a valid number.", "error")
+            mysql.connection.rollback()  # Rollback in case of any error
+            flash(f"An error occurred: {str(e)}", "error")
             return redirect(url_for("bidForMission"))
 
 @app.route("/view_bids", methods=["GET", "POST"])
@@ -675,7 +704,7 @@ def admin():
                             CONCAT('Status: ', 
                                 CASE 
                                     WHEN M.launch_date > CURRENT_DATE THEN 'Upcoming'
-                                    WHEN CURRENT_DATE BETWEEN M.launch_date AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) THEN 'Ongoing'
+                                    WHEN CURRENT_DATE BETWEEN M.launch_date AND DATE_ADD(M.launch_date, INTERVAL M.duration MONTH) THEN 'Ongoing'
                                     ELSE 'Completed'
                                 END)
                         ) SEPARATOR ' | '
