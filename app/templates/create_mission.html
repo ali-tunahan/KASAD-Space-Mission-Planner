@@ -38,6 +38,15 @@
             <label for="unwanted_situations" class="form-label">Unwanted Situations</label>
             <textarea class="form-control" id="unwanted_situations" name="unwanted_situations" rows="3" placeholder="Describe any potential unwanted situations and how they should be handled."></textarea>
         </div>
+        <div class="mb-4">
+            <label for="required_trainings" class="form-label">Required Trainings</label>
+            <select class="form-control" id="required_trainings" name="required_trainings">
+                <option value="">No Training</option>
+                {% for training in trainings %}
+                <option value="{{ training.training_id }}">{{ training.name }}</option>
+                {% endfor %}
+            </select>
+        </div>        
         <button type="submit" class="btn btn-primary">Create Mission</button>
     </form>
 </div>

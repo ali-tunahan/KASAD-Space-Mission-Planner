@@ -370,7 +370,7 @@
         modal.querySelector('[name="nationality"]').value = data.nationality || '';
         modal.querySelector('[name="rank"]').value = data.rank || '';
         modal.querySelector('[name="title"]').value = data.title || '';
-        modal.querySelector('[name="exp"]').value = data.years_of_experience || '';
+        modal.querySelector('[name="exp"]').value = data.years_of_experience ?? '';
         // Continue setting other fields as needed
       }
     })
