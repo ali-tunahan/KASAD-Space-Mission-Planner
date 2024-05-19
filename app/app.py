@@ -264,7 +264,6 @@ def register():
 
     return render_template('register.html', message = message, companies =  companies)
 
-
 @app.route("/create_mission", methods=["GET", "POST"])
 def createMission():
     redirect_if_not_logged_in = check_logged_in()
@@ -273,8 +272,11 @@ def createMission():
     if redirect_if_not_logged_in or redirect_if_not_company:
         return redirect_if_not_logged_in
     
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("SELECT training_id, name FROM Training")
+    trainings = cursor.fetchall()
+    
     if request.method == "POST":
-        # Extract data from form
         title = request.form.get('title')
         description = request.form.get('description')
         objectives = request.form.get('objectives')
@@ -283,32 +285,33 @@ def createMission():
         num_of_astronauts = request.form.get('num_of_astronauts')
         payload_volume = request.form.get('payload_volume')
         payload_weight = request.form.get('payload_weight')
+        required_training = request.form.get('required_trainings')
         
-        # Data validation
         if not title or not description or not objectives or not launch_date or not duration or not num_of_astronauts or not payload_volume or not payload_weight:
             flash("Fill all the necessary fields.", 'error')
-            return render_template("create_mission.html")
+            return render_template("create_mission.html", trainings=trainings)
         
-        # Check date is in the future
         if datetime.strptime(launch_date, '%Y-%m-%d') < datetime.now():
             flash("Launch date must be in the future.", 'error')
-            return render_template("create_mission.html")
+            return render_template("create_mission.html", trainings=trainings)
 
-        # Insert data into the database
-        try:
-            cursor = mysql.connection.cursor()
-            cursor.execute('''
-                INSERT INTO Mission (mission_id, employer_id, title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ''', (uuid.uuid4().hex, session.get('company_id'), title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight))
-            mysql.connection.commit()
-            flash("Mission created successfully!", 'success')
-            return redirect(url_for('main'))  # Redirect to the main page or a confirmation page
+        mission_id = uuid.uuid4().hex
+        cursor.execute('''
+            INSERT INTO Mission (mission_id, employer_id, title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', (mission_id, session.get('company_id'), title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight))
         
-        except Exception as e:
-            print("Error executing SQL query:", e)
-            return render_template("create_mission.html")
-    return render_template("create_mission.html")
+        if required_training and required_training != "":
+            cursor.execute('''
+                INSERT INTO Mission_Requires_Training (mission_id, training_id)
+                VALUES (%s, %s)
+            ''', (mission_id, required_training))
+        
+        mysql.connection.commit()
+        flash("Mission created successfully!", 'success')
+        return redirect(url_for('main'))
+
+    return render_template("create_mission.html", trainings=trainings)
 
 @app.route("/manage_astronauts", methods=["GET", "POST", "DELETE"])
 def manageAstronauts():
