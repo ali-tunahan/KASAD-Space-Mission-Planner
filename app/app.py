@@ -619,7 +619,7 @@ def bidForMission():
                 for astronaut_id in astronaut_ids:
                     cursor.execute("INSERT INTO Bid_Has_Astronaut (bid_id, id) VALUES (%s, %s)", (bid_id, astronaut_id))
                 mysql.connection.commit()
-        except ValueError:
+        except ValueError as e:
             mysql.connection.rollback()  # Rollback in case of any error
             flash(f"An error occurred: {str(e)}", "error")
             return redirect(url_for("bidForMission"))
