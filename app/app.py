@@ -30,6 +30,45 @@ def check_logged_in():
         return redirect(url_for('login'))
     return None
 
+def save_admin_status():
+    user_id = session.get('userid')
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("""
+        SELECT 1 FROM Admin WHERE id = %s;
+    """, (user_id,))
+    admin_exists = cursor.fetchone()
+
+    if admin_exists:
+       session['isAdmin'] = True
+    else:
+        session['isAdmin'] = False
+
+
+def check_admin():
+    print(session.get('loggedin'))
+    if not session.get('loggedin'):
+        print("Not logged in")
+        return redirect(url_for('login'))
+
+    user_id = session.get('userid')
+    if user_id is None:
+        print("User ID not found")
+        return redirect(url_for('login'))
+
+    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cursor.execute("""
+        SELECT 1 FROM Admin WHERE id = %s;
+    """, (user_id,))
+    admin_exists = cursor.fetchone()
+
+    if admin_exists:
+        print("User is an admin")
+    else:
+        print("User is not an admin")
+        return redirect(url_for('login'))
+
+    return None
+
 def check_account_type():
     print(session.get('accounttype'))
     if not session.get('accounttype'):
@@ -60,10 +99,6 @@ def get_user_id():
 @app.route("/")
 @app.route("/main", methods=["GET", "POST"])
 def main():
-    redirect_if_not_logged_in = check_logged_in()
-    if redirect_if_not_logged_in:
-        return redirect_if_not_logged_in
-    
     message = "CU"
     return render_template("main.html", message=message)
 
@@ -84,6 +119,8 @@ def login():
             company = cursor.fetchone()
             cursor.execute('SELECT * FROM Astronaut WHERE id = %s', (user['id'],))
             astronaut = cursor.fetchone()
+            save_admin_status()
+            
             if(company):
                 session['accounttype'] = 'company'
             elif(astronaut):
@@ -391,6 +428,9 @@ def logout():
     session.pop('loggedin', None)  # Remove 'loggedin' from session
     session.pop('userid', None)    # Optional: clear other session variables
     session.pop('email', None)     # Optional: clear other session variables
+    session.pop('isAdmin', None)
+    session.pop('accounttype', None)
+
     return redirect(url_for('login'))
 
 
@@ -426,14 +466,15 @@ def assignTrainings():
                 cursor.execute('SELECT training_id FROM Astronaut_Completes_Training WHERE astronaut_id = %s', (astronaut_id,))
                 completed_or_not_completed_trainings = [row['training_id'] for row in cursor.fetchall()]
 
-                if all(prereq['prereq_id'] in completed_trainings for prereq in prerequisite_trainings) and training_id not in completed_or_not_completed_trainings:
-                    cursor.execute('INSERT INTO Astronaut_Completes_Training (astronaut_id, training_id, status) VALUES (%s, %s, 0)', (astronaut_id, training_id))
-                    mysql.connection.commit()
-                else:
-                    cursor.execute('SELECT * FROM Person WHERE id = %s', (astronaut_id,))
-                    astro_name_result = cursor.fetchone()
-                    astro_name = astro_name_result['first_name'] +' '+astro_name_result['middle_name'] +' '+ astro_name_result['last_name']
-                    astronauts_cant_take.append(astro_name)
+
+            if all(prereq['prereq_id'] in completed_trainings for prereq in prerequisite_trainings) and training_id not in completed_or_not_completed_trainings:
+                cursor.execute('INSERT INTO Astronaut_Completes_Training (astronaut_id, training_id, status) VALUES (%s, %s, 0)', (astronaut_id, training_id))
+                mysql.connection.commit()
+            else:
+                cursor.execute('SELECT * FROM Person WHERE id = %s', (astronaut_id,))
+                astro_name_result = cursor.fetchone()
+                astro_name = astro_name_result['first_name'] +' '+astro_name_result['middle_name'] +' '+ astro_name_result['last_name']
+                astronauts_cant_take.append(astro_name)
             cursor.execute('SELECT name FROM Training WHERE training_id = %s', (training_id,))
             training_name_result = cursor.fetchone()
             training_name = training_name_result['name']
@@ -523,43 +564,124 @@ def viewBids():
 @app.route("/admin_page", methods=["GET", "POST"])
 def admin():
     redirect_if_not_logged_in = check_logged_in()
-    redirect_if_not_admin = None # TODO check if admin
+    isAdmin= session.get('isAdmin')
     
-    if redirect_if_not_logged_in or redirect_if_not_admin:
+    if redirect_if_not_logged_in :
         return redirect_if_not_logged_in
     
+    if not isAdmin:
+        return redirect(url_for('main'))
+  
+    
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    admin_id = get_user_id()
+
     if request.method == 'POST':
-        if 'expensive_mission' in request.form:
-            cursor.execute("""
-                INSERT INTO SystemReport (report_id, title, content) 
-                SELECT UUID(), 'Most Expensive Missions', CONCAT('Mission ID: ', mission_id, ', Payload Weight: ', payload_weight, ', Title: ', title) 
-                FROM Mission 
-                ORDER BY payload_weight DESC 
-                LIMIT 1;
-            """)
+        
+            if 'delete_reports' in request.form:
+                cursor.execute("DELETE FROM SystemReport;")
+                mysql.connection.commit()
+            
+            if 'expensive_mission' in request.form:
+                cursor.execute("""
+                    INSERT INTO SystemReport (report_id, id, title, content) 
+                    SELECT UUID(), %s, 'Most Expensive Missions', CONCAT('Mission ID: ', mission_id, ', Payload Weight: ', payload_weight, ', Title: ', title) 
+                    FROM Mission 
+                    ORDER BY payload_weight DESC 
+                    LIMIT 1;
+                """, (admin_id,))
+            elif 'mission_status' in request.form:
+                cursor.execute("""
+                    INSERT INTO SystemReport (report_id, id, title, content)
+                    SELECT UUID(), %s, 'Mission Status', 
+                    GROUP_CONCAT(
+                        CONCAT_WS(', ', 
+                            CONCAT('Mission ID: ', M.mission_id),
+                            CONCAT('Title: ', M.title),
+                            CONCAT('Launch Date: ', M.launch_date),
+                            CONCAT('Duration: ', M.duration),
+                            CONCAT('Payload Volume: ', M.payload_volume),
+                            CONCAT('Payload Weight: ', M.payload_weight),
+                            CONCAT('Number of Astronauts: ', M.num_of_astronauts),
+                            CONCAT('Status: ', 
+                                CASE 
+                                    WHEN M.launch_date > CURRENT_DATE THEN 'Upcoming'
+                                    WHEN CURRENT_DATE BETWEEN M.launch_date AND DATE_ADD(M.launch_date, INTERVAL M.duration DAY) THEN 'Ongoing'
+                                    ELSE 'Completed'
+                                END)
+                        ) SEPARATOR ' | '
+                    ) AS MissionDetails
+                    FROM Mission M;
+                """, (admin_id,))
+
+            elif 'astronaut_utilization' in request.form:
+                cursor.execute("""
+                    INSERT INTO SystemReport (report_id, id, title, content)
+                    SELECT UUID(), %s, 'Astronaut Utilization', 
+                    GROUP_CONCAT(
+                        CONCAT_WS('; ',
+                            CONCAT('Astronaut ID: ', A.id),
+                            CONCAT('First Name: ', P.first_name),
+                            CONCAT('Last Name: ', P.last_name),
+                            CONCAT('Missions Assigned: ', AggData.MissionsCount),
+                            CONCAT('Trainings Completed: ', AggData.TrainingsCount)
+                        ) SEPARATOR ' | '
+                    )
+                    FROM Astronaut A
+                    JOIN Person P ON A.id = P.id
+                    LEFT JOIN (
+                        SELECT MA.bid_id, COUNT(DISTINCT MA.mission_id) AS MissionsCount,
+                            COUNT(DISTINCT AT.training_id) AS TrainingsCount
+                        FROM Mission_Accepted_Bid MA
+                        LEFT JOIN Astronaut_Completes_Training AT ON MA.bid_id = AT.astronaut_id AND AT.status = 1
+                        GROUP BY MA.bid_id
+                    ) AggData ON A.id = AggData.bid_id;
+                """, (admin_id,))
+
+
+            elif 'financial_overview' in request.form:
+                cursor.execute("""
+                    INSERT INTO SystemReport (report_id, id, title, content)
+                    SELECT UUID(), %s, 'Financial Overview', 
+                    GROUP_CONCAT(
+                        CONCAT_WS(', ',
+                            CONCAT('Company Name: ', CompanyDetails.name),
+                            CONCAT('Total Bids: ', CompanyDetails.TotalBids),
+                            CONCAT('Number of Bids: ', CompanyDetails.BidCount),
+                            CONCAT('Transactions Amount: ', CompanyDetails.TotalTransactions),
+                            CONCAT('Number of Transactions: ', CompanyDetails.TransactionCount)
+                        ) SEPARATOR ' | '
+                    )
+                    FROM (
+                        SELECT C.name,
+                            SUM(B.amount) AS TotalBids,
+                            COUNT(DISTINCT B.bid_id) AS BidCount,
+                            SUM(T.amount) AS TotalTransactions,
+                            COUNT(DISTINCT T.transaction_id) AS TransactionCount
+                        FROM Company C
+                        LEFT JOIN Bidder BD ON C.id = BD.id
+                        LEFT JOIN Bid B ON BD.id = B.bidder_id
+                        LEFT JOIN Transaction T ON BD.id = T.bidder_id
+                        GROUP BY C.id
+                    ) AS CompanyDetails;
+                """, (admin_id,))
+
             mysql.connection.commit()
+        # except MySQLdb.IntegrityError as e:
+        #     print(f"Error: {e}")
+        #     cursor.close()
+        #     flash("Failed to create report. Please ensure you're authorized as an admin.", "error")
+        #     return redirect(url_for('admin'))  # Redirect back to admin page with error
 
-        elif 'duplicate_missions' in request.form:
-            cursor.execute("""
-                INSERT INTO SystemReport (report_id, title, content)
-                SELECT UUID(), 'Duplicate Missions', GROUP_CONCAT(CONCAT('Mission ID: ', mission_id))
-                FROM (
-                    SELECT mission_id, title, description, launch_date
-                    FROM Mission
-                    GROUP BY title, description, launch_date
-                    HAVING COUNT(*) > 1
-                ) AS Duplicates
-                GROUP BY Duplicates.title, Duplicates.description, Duplicates.launch_date;
 
-            """)
-            mysql.connection.commit()
 
-    # Retrieve the latest report for display
-    cursor.execute("SELECT report_id, title, content FROM SystemReport ")
+    # Retrieve the latest reports for display
+    cursor.execute("SELECT report_id, title, content FROM SystemReport")
     reports = cursor.fetchall()
     cursor.close()
     return render_template('admin_page.html', reports=reports)
+
 @app.route("/download_report/<report_id>")
 def download_report(report_id):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
@@ -630,8 +752,6 @@ def get_missions(astronaut_id):
 def page_not_found(e):
     # Note 'e' is the error object
     return render_template('error_page.html'), 404
-
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5001))
