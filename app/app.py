@@ -555,11 +555,13 @@ def bidForMission():
         # Prepare query based on filters
         filter_params = request.args
         
-        query = """ SELECT M.*
-                    FROM Mission M
-                    LEFT JOIN Mission_Accepted_Bid MAB ON M.mission_id = MAB.mission_id
-                    WHERE MAB.bid_id IS NULL
-                """
+        query = """ SELECT M.*, GROUP_CONCAT(DISTINCT T.name SEPARATOR ', ') AS training_names
+            FROM Mission M
+            LEFT JOIN Mission_Accepted_Bid MAB ON M.mission_id = MAB.mission_id
+            LEFT JOIN Mission_Requires_Training MRT on M.mission_id = MRT.mission_id
+            LEFT JOIN Training T on MRT.training_id = T.training_id
+            WHERE MAB.bid_id IS NULL
+        """
         params = []
         
 
@@ -575,7 +577,8 @@ def bidForMission():
         if 'weight' in filter_params and filter_params['weight']:
             query += " AND payload_weight <= %s"
             params.append(filter_params['weight'])
-        print(query, "\n NO WAY \n", params)
+        query += " GROUP BY M.mission_id"
+
         cursor.execute(query, params)
         missions = cursor.fetchall()
         company_id = get_user_id()
@@ -583,7 +586,6 @@ def bidForMission():
         astronauts = cursor.fetchall()
         
         print(astronauts)
-
 
         return render_template("bid_for_mission.html", missions=missions, launch_date_range=launch_date_range, duration_range=duration_range, volume_range=volume_range, weight_range=weight_range, astronauts=astronauts)
 
