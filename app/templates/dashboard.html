@@ -1,7 +1,13 @@
 {% extends "master.html" %} {% block title %} Astronaut Dashboard {% endblock %}
 {% block content %}
 
-<style></style>
+<style>
+  .centered-button {
+      margin: 0 auto;  /* Center the button horizontally */
+      padding-top: 2px;  /* Adjust padding to reduce space above */
+      padding-bottom: 2px;  /* Adjust padding to reduce space below */
+  }
+</style>
 
 <div class="container mt-4">
   <h1 class="mb-4">Welcome...</h1>
@@ -19,13 +25,19 @@
       {% if current_trainings %}
       <ul class="list-group">
         {% for training in current_trainings %}
-        <li class="list-group-item">
-          {{ training.name }} -
-          <strong>Status:</strong> {{ 'In Progress' if training.status != 100
-          else 'Complete' }}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                {{ training.name }} - <strong>Status:</strong> {{ 'In Progress' }}
+            </div>
+            <form action="{{ url_for('dashboard') }}" method="POST" class="d-flex align-items-center mb-0">
+              <input type="hidden" name="training_id" value="{{ training.training_id }}">
+              <input type="hidden" name="status" value="Completed">
+              <button type="submit" class="btn btn-primary btn-sm centered-button" name="button_id" value="{{ training.training_id }}">Complete</button>
+          </form>
         </li>
         {% endfor %}
-      </ul>
+    </ul>
+    
       {% else %}
       <div class="">
         <p>No current trainings.</p>

@@ -815,27 +815,34 @@ def download_report(report_id):
     return Response(report['content'], mimetype="text/plain",
                     headers={"Content-disposition": f"attachment; filename={report['title']}.txt"})
 
-@app.route('/dashboard')
+@app.route('/dashboard', methods=["GET", "POST"])
 def dashboard():
+    
     redirect_if_not_logged_in = check_logged_in()
     redirect_if_not_astronaut = astronaut_pageguard()
     
     if redirect_if_not_logged_in or redirect_if_not_astronaut:
         print("Not logged in or astronaut")
         return redirect_if_not_logged_in
-    
-    user_id = get_user_id()
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM Person WHERE id = %s", (user_id,))
-    person = cursor.fetchone()
-    
-    print("CU:",user_id,person)
-    
-    current_trainings, past_trainings = get_trainings(user_id)
-    upcoming_missions, past_missions = get_missions(user_id)
+    if request.method == 'POST':
+        training_id = request.form.get('training_id')
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("UPDATE Astronaut_Completes_Training SET status = 1 WHERE training_id = %s", (training_id,))
+        mysql.connection.commit()
+        return redirect(url_for('dashboard'))
+    else:    
+        user_id = get_user_id()
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT * FROM Person WHERE id = %s", (user_id,))
+        person = cursor.fetchone()
+        
+        print("CU:",user_id,person)
+        
+        current_trainings, past_trainings = get_trainings(user_id)
+        upcoming_missions, past_missions = get_missions(user_id)
 
-    return render_template('dashboard.html', current_trainings=current_trainings, past_trainings=past_trainings,
-                           upcoming_missions=upcoming_missions, past_missions=past_missions, person=person)
+        return render_template('dashboard.html', current_trainings=current_trainings, past_trainings=past_trainings,
+                            upcoming_missions=upcoming_missions, past_missions=past_missions, person=person)
     
 def get_trainings(astronaut_id):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
