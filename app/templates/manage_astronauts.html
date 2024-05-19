@@ -13,24 +13,90 @@
     z-index: 10;
   }
 </style>
+
+<button class="btn btn-primary float-end mx-5 mt-4" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">Filters</button>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel" data-bs-scroll="true" data-bs-backdrop="false">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="offcanvasRightLabel">Filters</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <form action="/manage_astronauts" method="GET">
+      <div class="row g-2 m-2"> Birth Date (YYYY-MM-DD)</div>
+      <div class="row g-2">
+        <div class="col-md">
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control" name="dateOfBirthLower" id="floatingDateLower" placeholder="12-05-1962">
+            <label for="floatingDateLower">Min</label>
+          </div>
+        </div>
+        <div class="col-md">
+          <div class="form-floating">
+            <input type="text" class="form-control" name="dateOfBirthUpper" id="floatingDateUpper" placeholder="12-05-1991">
+            <label for="floatingDateUpper">Max</label>
+          </div>
+        </div>
+      </div>
+      <div class="row g-2 m-2"> Nationality</div>
+      <div class="row g-2">
+        <div class="col-md">
+          <div>
+            <input type="text" class="form-control" name="nationalityFilter" id="floatingNationality">
+          </div>
+        </div>
+      </div>
+      <div class="row g-2 m-2 pt-2"> Rank</div>
+      <div class="row g-2">
+        <div class="col-md">
+          <div>
+            <input type="text" class="form-control" name="rankFilter" id="rankFilter">
+          </div>
+        </div>
+      </div>
+      <div class="row g-2 m-2 pt-2"> Years of Experience</div>
+      <div class="row g-2">
+        <div class="col-md">
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control" name="yearsOfExperienceLower" id="floatingExperienceLower" placeholder="12-05-1962">
+            <label for="floatingExperienceLower">Min</label>
+          </div>
+        </div>
+        <div class="col-md">
+          <div class="form-floating">
+            <input type="text" class="form-control" name="yearsOfExperienceUpper" id="floatingExperienceUpper" placeholder="12-05-1991">
+            <label for="floatingInputGrid">Max</label>
+          </div>
+        </div>
+      </div>
+      <div class="row w-25 m-2">
+        <button type="submit" class="btn btn-secondary">
+          Filter
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="container-fluid py-4 px-5">
   <h1 class="display-6 pb-2">Manage Astronauts</h1>
   <div class="accordion" id="accordionExample">
+    {% for astronaut in astronauts %}
     <div class="accordion-item border border-secondary">
       <h2 class="accordion-header">
         <button
           class="accordion-button"
           type="button"
           data-bs-toggle="collapse"
-          data-bs-target="#collapseOne"
+          data-bs-target="#collapse{{ loop.index }}"
           aria-expanded="false"
-          aria-controls="collapseOne"
+          aria-controls="collapse{{ loop.index }}"
         >
-          <p class="h4">Astronaut Name 1</p>
+          <p class="h4">{{ astronaut.title + ' ' + astronaut.first_name +  ' ' + astronaut.middle_name + ' ' + astronaut.last_name }}</p>
         </button>
       </h2>
       <div
-        id="collapseOne"
+        id="collapse{{ loop.index }}"
         class="accordion-collapse collapse collapse-horizontal"
         data-bs-parent="#accordionExample"
         style="transition: 0.5s"
@@ -40,30 +106,57 @@
             <div style="width: 50%">
               <ul class="list-group list-group-flush m-2">
                 <li class="list-group-item">
-                  <strong>Age: </strong> 15234512341234
+                  <strong>Age: </strong> {{astronaut.age}}
                 </li>
                 <li class="list-group-item">
-                  <strong>Performance: </strong> gqrgrgqrgqrg
+                  <strong>Performance: </strong> {{astronaut.performance}}
                 </li>
                 <li class="list-group-item">
-                  <strong>Years Worked: </strong> 412341234
+                  <strong>Years Worked: </strong> {{astronaut.years_of_experience}}
                 </li>
               </ul>
             </div>
             <div class="pt-4">
-              <p class="d-inline-flex gap-1">
+              <div class="d-inline-flex gap-1">
                 <button
-                  class="btn btn-primary"
+                  class="btn btn-secondary"
                   type="button"
                   data-bs-toggle="modal"
-                  data-bs-target="#staticModal"
-                >
-                  Button with data-bs-target
+                  data-bs-target="#staticModal{{ loop.index }}"
+                  onclick="fetchAstronautData('{{ astronaut.astronaut_id }}', '{{ loop.index }}')"
+                >Edit
                 </button>
-              </p>
+                {% if astronaut.filtered_missions_count > 0 %}
+                <button
+                class="btn btn-danger"
+                type="button"
+                data-bs-toggle="modal"
+                data-bs-target="#fireModal{{ loop.index }}"
+              >Fire
+              </button>
+              {% endif %}
+              </div>
+              <!-- Modal -->
+              <div class="modal fade" id="fireModal{{loop.index}}" tabindex="-1" aria-labelledby="fireModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h1 class="modal-title fs-5" id="fireModalLabel">Modal title</h1>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      Are you sure you want to fire this astronaut?
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="button" class="btn btn-primary" onclick="deleteAstronaut('{{ astronaut.astronaut_id }}')">Fire</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <div
                 class="modal fade border border-5 border-info border-top-0 border-bottom-0 border-opacity-25"
-                id="staticModal"
+                id="staticModal{{ loop.index }}"
                 data-bs-backdrop="static"
                 data-bs-keyboard="false"
                 tabindex="-1"
@@ -86,7 +179,7 @@
                         aria-label="Close"
                       ></button>
                     </div>
-                    <form class="modal-body m-4">
+                    <form class="modal-body m-4" id="editForm{{ loop.index }}" action="/manage_astronauts?astronaut_id={{astronaut.astronaut_id}}" method="POST">
                       <div class="row mb-2">
                         <div class="col">
                           <div class="ps-1">First Name</div>
@@ -102,6 +195,7 @@
                         <div class="col">
                           <input
                             name="fname"
+                            id="fname"
                             type="text"
                             class="form-control"
                             value="my-first-name"
@@ -110,6 +204,7 @@
                         <div class="col">
                           <input
                             name="mname"
+                            id="mname"
                             type="text"
                             class="form-control"
                             value="my-middle-name"
@@ -118,6 +213,7 @@
                         <div class="col">
                           <input
                             name="lname"
+                            id="lname"
                             type="text"
                             class="form-control"
                             value="my-last-name"
@@ -171,6 +267,7 @@
                         <div class="col">
                           <input
                             name="nationality"
+                            id="nationality"
                             type="text"
                             class="form-control"
                             value="nationality"
@@ -186,6 +283,7 @@
                         <div class="col">
                           <input
                             name="rank"
+                            id="rank"
                             type="text"
                             class="form-control"
                             value="rank"
@@ -201,6 +299,7 @@
                         <div class="col">
                           <input
                             name="title"
+                            id="title"
                             type="text"
                             class="form-control"
                             value="title"
@@ -216,6 +315,7 @@
                         <div class="col">
                           <input
                             name="exp"
+                            id="exp"
                             type="text"
                             class="form-control"
                             value="exp"
@@ -236,446 +336,59 @@
         </div>
       </div>
     </div>
-    <div class="accordion-item border border-secondary">
-      <h2 class="accordion-header">
-        <button
-          class="accordion-button collapsed"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#collapseTwo"
-          aria-expanded="false"
-          aria-controls="collapseTwo"
-        >
-          <p class="h4">Astronaut Name 2</p>
-        </button>
-      </h2>
-      <div
-        id="collapseTwo"
-        class="accordion-collapse collapse collapse-horizontal"
-        data-bs-parent="#accordionExample"
-        style="transition: 0.5s"
-      >
-        <div class="accordion-body" style="width: 1000px">
-          <div class="container-fluid d-flex flex-column px-3">
-            <div style="width: 50%">
-              <ul class="list-group list-group-flush m-2">
-                <li class="list-group-item">
-                  <strong>Age: </strong> 15234512341234
-                </li>
-                <li class="list-group-item">
-                  <strong>Performance: </strong> gqrgrgqrgqrg
-                </li>
-                <li class="list-group-item">
-                  <strong>Years Worked: </strong> 412341234
-                </li>
-              </ul>
-            </div>
-            <div class="pt-4">
-              <p class="d-inline-flex gap-1">
-                <button
-                  class="btn btn-primary"
-                  type="button"
-                  data-bs-toggle="modal"
-                  data-bs-target="#staticModal2"
-                >
-                  Button with data-bs-target
-                </button>
-              </p>
-              <div
-                class="modal fade border border-5 border-info border-top-0 border-bottom-0 border-opacity-25"
-                id="staticModal2"
-                data-bs-backdrop="static"
-                data-bs-keyboard="false"
-                tabindex="-1"
-                aria-labelledby="staticBackdropLabel"
-                aria-hidden="true"
-              >
-                <div class="modal-dialog modal-dialog-scrollable modal-xl">
-                  <div
-                    class="modal-content border-secondary border-2 card-body m-4"
-                  >
-                    <div class="modal-header">
-                      <p class="lead">
-                        Please change the necessary information that you want to
-                        edit.
-                      </p>
-                      <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                        aria-label="Close"
-                      ></button>
-                    </div>
-                    <form class="modal-body m-4">
-                      <div class="row mb-2">
-                        <div class="col">
-                          <div class="ps-1">First Name</div>
-                        </div>
-                        <div class="col">
-                          <div class="ps-1">Middle Name</div>
-                        </div>
-                        <div class="col">
-                          <div class="ps-1">Last Name</div>
-                        </div>
-                      </div>
-                      <div class="row mb-4">
-                        <div class="col">
-                          <input
-                            name="fname"
-                            type="text"
-                            class="form-control"
-                            value="my-first-name"
-                          />
-                        </div>
-                        <div class="col">
-                          <input
-                            name="mname"
-                            type="text"
-                            class="form-control"
-                            value="my-middle-name"
-                          />
-                        </div>
-                        <div class="col">
-                          <input
-                            name="lname"
-                            type="text"
-                            class="form-control"
-                            value="my-last-name"
-                          />
-                        </div>
-                      </div>
-                      <div class="text-center">Birth Date</div>
-                      <div class="row mb-2">
-                        <div class="col">
-                          <div class="ps-1">Day</div>
-                        </div>
-                        <div class="col">
-                          <div class="ps-1">Month</div>
-                        </div>
-                        <div class="col">
-                          <div class="ps-1">Year</div>
-                        </div>
-                      </div>
-                      <div class="row mb-3">
-                        <div class="col">
-                          <input
-                            name="day"
-                            type="text"
-                            class="form-control"
-                            value="day"
-                          />
-                        </div>
-                        <div class="col">
-                          <input
-                            name="month"
-                            type="text"
-                            class="form-control"
-                            value="month"
-                          />
-                        </div>
-                        <div class="col">
-                          <input
-                            name="year"
-                            type="text"
-                            class="form-control"
-                            value="year"
-                          />
-                        </div>
-                      </div>
-                      <div class="row mb-1">
-                        <div class="col">
-                          <div class="ps-1">Nationality</div>
-                        </div>
-                      </div>
-                      <div class="row mb-3">
-                        <div class="col">
-                          <input
-                            name="nationality"
-                            type="text"
-                            class="form-control"
-                            value="nationality"
-                          />
-                        </div>
-                      </div>
-                      <div class="row mb-1">
-                        <div class="col">
-                          <div class="ps-1">Rank</div>
-                        </div>
-                      </div>
-                      <div class="row mb-3">
-                        <div class="col">
-                          <input
-                            name="rank"
-                            type="text"
-                            class="form-control"
-                            value="rank"
-                          />
-                        </div>
-                      </div>
-                      <div class="row mb-1">
-                        <div class="col">
-                          <div class="ps-1">Title</div>
-                        </div>
-                      </div>
-                      <div class="row mb-3">
-                        <div class="col">
-                          <input
-                            name="title"
-                            type="text"
-                            class="form-control"
-                            value="title"
-                          />
-                        </div>
-                      </div>
-                      <div class="row mb-1">
-                        <div class="col">
-                          <div class="ps-1">Exp</div>
-                        </div>
-                      </div>
-                      <div class="row mb-3">
-                        <div class="col">
-                          <input
-                            name="exp"
-                            type="text"
-                            class="form-control"
-                            value="exp"
-                          />
-                        </div>
-                      </div>
-                      <div class="row w-50 mx-auto">
-                        <button type="submit" class="btn btn-secondary">
-                          Submit
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="accordion-item border border-secondary">
-      <h2 class="accordion-header">
-        <button
-          class="accordion-button collapsed"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#collapseThree"
-          aria-expanded="false"
-          aria-controls="collapseThree"
-        >
-          <p class="h4">Astronaut Name 3</p>
-        </button>
-      </h2>
-      <div
-        id="collapseThree"
-        class="accordion-collapse collapse collapse-horizontal"
-        data-bs-parent="#accordionExample"
-        style="transition: 0.5s"
-      >
-        <div class="accordion-body" style="width: 1000px">
-          <div class="container-fluid d-flex flex-column px-3">
-            <div style="width: 50%">
-              <ul class="list-group list-group-flush m-2">
-                <li class="list-group-item">
-                  <strong>Age: </strong> 15234512341234
-                </li>
-                <li class="list-group-item">
-                  <strong>Performance: </strong> gqrgrgqrgqrg
-                </li>
-                <li class="list-group-item">
-                  <strong>Years Worked: </strong> 412341234
-                </li>
-              </ul>
-            </div>
-            <div class="pt-4">
-              <p class="d-inline-flex gap-1">
-                <button
-                  class="btn btn-primary"
-                  type="button"
-                  data-bs-toggle="modal"
-                  data-bs-target="#staticModal3"
-                >
-                  Button with data-bs-target
-                </button>
-              </p>
-              <div
-                class="modal fade border border-5 border-info border-top-0 border-bottom-0 border-opacity-25"
-                id="staticModal3"
-                data-bs-backdrop="static"
-                data-bs-keyboard="false"
-                tabindex="-1"
-                aria-labelledby="staticBackdropLabel"
-                aria-hidden="true"
-              >
-                <div class="modal-dialog modal-dialog-scrollable modal-xl">
-                  <div
-                    class="modal-content border-secondary border-2 card-body m-4"
-                  >
-                    <div class="modal-header">
-                      <p class="lead">
-                        Please change the necessary information that you want to
-                        edit.
-                      </p>
-                      <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                        aria-label="Close"
-                      ></button>
-                    </div>
-                    <form class="modal-body m-4">
-                      <div class="row mb-2">
-                        <div class="col">
-                          <div class="ps-1">First Name</div>
-                        </div>
-                        <div class="col">
-                          <div class="ps-1">Middle Name</div>
-                        </div>
-                        <div class="col">
-                          <div class="ps-1">Last Name</div>
-                        </div>
-                      </div>
-                      <div class="row mb-4">
-                        <div class="col">
-                          <input
-                            name="fname"
-                            type="text"
-                            class="form-control"
-                            value="my-first-name"
-                          />
-                        </div>
-                        <div class="col">
-                          <input
-                            name="mname"
-                            type="text"
-                            class="form-control"
-                            value="my-middle-name"
-                          />
-                        </div>
-                        <div class="col">
-                          <input
-                            name="lname"
-                            type="text"
-                            class="form-control"
-                            value="my-last-name"
-                          />
-                        </div>
-                      </div>
-                      <div class="text-center">Birth Date</div>
-                      <div class="row mb-2">
-                        <div class="col">
-                          <div class="ps-1">Day</div>
-                        </div>
-                        <div class="col">
-                          <div class="ps-1">Month</div>
-                        </div>
-                        <div class="col">
-                          <div class="ps-1">Year</div>
-                        </div>
-                      </div>
-                      <div class="row mb-3">
-                        <div class="col">
-                          <input
-                            name="day"
-                            type="text"
-                            class="form-control"
-                            value="day"
-                          />
-                        </div>
-                        <div class="col">
-                          <input
-                            name="month"
-                            type="text"
-                            class="form-control"
-                            value="month"
-                          />
-                        </div>
-                        <div class="col">
-                          <input
-                            name="year"
-                            type="text"
-                            class="form-control"
-                            value="year"
-                          />
-                        </div>
-                      </div>
-                      <div class="row mb-1">
-                        <div class="col">
-                          <div class="ps-1">Nationality</div>
-                        </div>
-                      </div>
-                      <div class="row mb-3">
-                        <div class="col">
-                          <input
-                            name="nationality"
-                            type="text"
-                            class="form-control"
-                            value="nationality"
-                          />
-                        </div>
-                      </div>
-                      <div class="row mb-1">
-                        <div class="col">
-                          <div class="ps-1">Rank</div>
-                        </div>
-                      </div>
-                      <div class="row mb-3">
-                        <div class="col">
-                          <input
-                            name="rank"
-                            type="text"
-                            class="form-control"
-                            value="rank"
-                          />
-                        </div>
-                      </div>
-                      <div class="row mb-1">
-                        <div class="col">
-                          <div class="ps-1">Title</div>
-                        </div>
-                      </div>
-                      <div class="row mb-3">
-                        <div class="col">
-                          <input
-                            name="title"
-                            type="text"
-                            class="form-control"
-                            value="title"
-                          />
-                        </div>
-                      </div>
-                      <div class="row mb-1">
-                        <div class="col">
-                          <div class="ps-1">Exp</div>
-                        </div>
-                      </div>
-                      <div class="row mb-3">
-                        <div class="col">
-                          <input
-                            name="exp"
-                            type="text"
-                            class="form-control"
-                            value="exp"
-                          />
-                        </div>
-                      </div>
-                      <div class="row w-50 mx-auto">
-                        <button type="submit" class="btn btn-secondary">
-                          Submit
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    {% endfor %}
   </div>
 </div>
+
+<script>
+  function fetchAstronautData(astronautId, loopIndex) {
+    console.log(astronautId);
+    console.log(loopIndex)
+    //console.log(loopIndex);
+    fetch('/manage_astronauts?astronaut_id=' + encodeURIComponent(astronautId), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        alert(data.error);
+      } else {
+        console.log(data); // Output data to console for debugging
+        // Get the modal specific to this astronaut
+        var modal = document.getElementById('staticModal' + loopIndex);
+        // Use the modal context to find each input
+        document.getElementById('fname').value = data.first_name;
+        modal.querySelector('[name="fname"]').value = data.first_name || '';
+        modal.querySelector('[name="mname"]').value = data.middle_name || '';
+        modal.querySelector('[name="lname"]').value = data.last_name || '';
+        modal.querySelector('[name="day"]').value = data.day_of_birth || '';
+        modal.querySelector('[name="month"]').value = data.month_of_birth || '';
+        modal.querySelector('[name="year"]').value = data.year_of_birth || '';
+        modal.querySelector('[name="nationality"]').value = data.nationality || '';
+        modal.querySelector('[name="rank"]').value = data.rank || '';
+        modal.querySelector('[name="title"]').value = data.title || '';
+        modal.querySelector('[name="exp"]').value = data.years_of_experience || '';
+        // Continue setting other fields as needed
+      }
+    })
+    //.catch(error => console.error('Error:', error));
+  }
+  function deleteAstronaut(astronautId) {
+    fetch('/manage_astronauts?astronaut_id=' + encodeURIComponent(astronautId), {
+        method: 'DELETE'
+    })
+    .then(() => {
+        // Reload the page after the DELETE request is completed
+        window.location.reload();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error deleting astronaut: ' + error.message);
+    });
+  }
+</script>
+
 {% endblock %}

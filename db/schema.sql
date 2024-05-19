@@ -40,12 +40,13 @@ CREATE TABLE IF NOT EXISTS Company (
 
 CREATE TABLE IF NOT EXISTS Astronaut (
     id CHAR(36) PRIMARY KEY,
-    company_id CHAR(36),
+    company_id CHAR(36) NULL,
     date_of_birth DATE,
     nationality VARCHAR(50),
     rank VARCHAR(50),
     years_of_experience INT,
     FOREIGN KEY (id) REFERENCES User(id),
+    FOREIGN KEY (id) REFERENCES Person(id),
     FOREIGN KEY (company_id) REFERENCES Company(id)
 );
 
@@ -306,12 +307,18 @@ INSERT INTO User (id, email, password) VALUES
 ('66666666-6666-6666-6666-666666666666', 'user6@example.com', 'password6'),
 ('77777777-7777-7777-7777-777777777777', 'user7@example.com', 'password7'),
 ('88888888-8888-8888-8888-888888888888', 'user8@example.com', 'password8'),
-('99999999-9999-9999-9999-999999999999', 'user9@example.com', 'password9');
+('99999999-9999-9999-9999-999999999999', 'user9@example.com', 'password9'),
+('11111111-1111-1111-1111-222222222222', 'user10@example.com', 'password10');
 
 INSERT INTO Person (id, title, first_name, middle_name, last_name) VALUES
 ('11111111-1111-1111-1111-111111111111', 'Mr.', 'John', 'Q.', 'Doe'),
 ('22222222-2222-2222-2222-222222222222', 'Ms.', 'Jane', 'R.', 'Smith'),
-('33333333-3333-3333-3333-333333333333', 'Dr.', 'Jim', 'B.', 'Beam');
+('33333333-3333-3333-3333-333333333333', 'Dr.', 'Jim', 'B.', 'Beam'),
+('77777777-7777-7777-7777-777777777777', 'Mr.', 'Gnour', 'The', 'Devourer'),
+('88888888-8888-8888-8888-888888888888', 'Dr.', 'Ati', 'Tunahan', 'Zilla'),
+('99999999-9999-9999-9999-999999999999', 'Av.', 'Serhan', 'Bayri', 'Domuzu'),
+('11111111-1111-1111-1111-222222222222', 'Prof. Dr.', 'Ibrahim', 'Mustafa', 'Saracoglu');
+
 
 INSERT INTO Admin (id, assigned_region) VALUES
 ('11111111-1111-1111-1111-111111111111', 'North America'),
@@ -326,7 +333,8 @@ INSERT INTO Company (id, name, street, city, state, postal_code, founding_date, 
 INSERT INTO Astronaut (id, company_id, date_of_birth, nationality, rank, years_of_experience) VALUES
 ('77777777-7777-7777-7777-777777777777', '44444444-4444-4444-4444-444444444444', '1980-07-24', 'American', 'Commander', 15),
 ('88888888-8888-8888-8888-888888888888', '55555555-5555-5555-5555-555555555555', '1975-05-15', 'Canadian', 'Pilot', 20),
-('99999999-9999-9999-9999-999999999999', '66666666-6666-6666-6666-666666666666', '1990-12-01', 'British', 'Engineer', 10);
+('99999999-9999-9999-9999-999999999999', '66666666-6666-6666-6666-666666666666', '1990-12-01', 'British', 'Engineer', 10),
+('11111111-1111-1111-1111-222222222222', '44444444-4444-4444-4444-444444444444', '1971-03-30', 'Russian', 'Pilot', 32);
 
 INSERT INTO Bidder (id, specialization) VALUES
 ('44444444-4444-4444-4444-444444444444', 'Rocket Engineering'),
@@ -365,6 +373,7 @@ INSERT INTO Training (training_id, name, code, description, duration) VALUES
 
 INSERT INTO Bid_Has_Astronaut (bid_id, id) VALUES
 ('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1', '77777777-7777-7777-7777-777777777777'),
+('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1', '11111111-1111-1111-1111-222222222222'),
 ('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2', '88888888-8888-8888-8888-888888888888'),
 ('c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3', '99999999-9999-9999-9999-999999999999');
 
@@ -389,11 +398,14 @@ INSERT INTO Astronaut_Completes_Training (astronaut_id, training_id, status) VAL
 ('77777777-7777-7777-7777-777777777777', 'm3m3m3m3-m3m3-m3m3-m3m3-m3m3m3m3m3m3', 100),
 ('88888888-8888-8888-8888-888888888888', 'm3m3m3m3-m3m3-m3m3-m3m3-m3m3m3m3m3m3', 100),
 ('99999999-9999-9999-9999-999999999999', 'm3m3m3m3-m3m3-m3m3-m3m3-m3m3m3m3m3m3', 100),
+('11111111-1111-1111-1111-222222222222', 'm3m3m3m3-m3m3-m3m3-m3m3-m3m3m3m3m3m3', 100),
 -- Advanced Navigation (requires Basic Space Survival)
 ('77777777-7777-7777-7777-777777777777', 'n4n4n4n4-n4n4-n4n4-n4n4-n4n4n4n4n4n4', 100),
 ('88888888-8888-8888-8888-888888888888', 'n4n4n4n4-n4n4-n4n4-n4n4-n4n4n4n4n4n4', 100),
 ('99999999-9999-9999-9999-999999999999', 'n4n4n4n4-n4n4-n4n4-n4n4-n4n4n4n4n4n4', 100),
+('11111111-1111-1111-1111-222222222222', 'n4n4n4n4-n4n4-n4n4-n4n4-n4n4n4n4n4n4', 100),
 -- Zero-G Operations (requires Advanced Navigation)
 ('77777777-7777-7777-7777-777777777777', 'o5o5o5o5-o5o5-o5o5-o5o5-o5o5o5o5o5o5', 100),
 ('88888888-8888-8888-8888-888888888888', 'o5o5o5o5-o5o5-o5o5-o5o5-o5o5o5o5o5o5', 100),
-('99999999-9999-9999-9999-999999999999', 'o5o5o5o5-o5o5-o5o5-o5o5-o5o5o5o5o5o5', 100);
+('99999999-9999-9999-9999-999999999999', 'o5o5o5o5-o5o5-o5o5-o5o5-o5o5o5o5o5o5', 100),
+('11111111-1111-1111-1111-222222222222', 'o5o5o5o5-o5o5-o5o5-o5o5-o5o5o5o5o5o5', 100);
