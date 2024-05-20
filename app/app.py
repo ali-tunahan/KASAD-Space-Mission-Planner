@@ -588,18 +588,17 @@ def bidForMission():
         """
         params = []
         
-
         if 'launch_date' in filter_params and filter_params['launch_date']:
-            query += " AND launch_date = %s"
+            query += " AND M.launch_date = %s"
             params.append(filter_params['launch_date'])
         if 'duration' in filter_params and filter_params['duration']:
-            query += " AND duration <= %d"
+            query += " AND M.duration <= %s"
             params.append(filter_params['duration'])
         if 'volume' in filter_params and filter_params['volume']:
-            query += " AND payload_volume <= %s"
+            query += " AND M.payload_volume <= %s"
             params.append(filter_params['volume'])
         if 'weight' in filter_params and filter_params['weight']:
-            query += " AND payload_weight <= %s"
+            query += " AND M.payload_weight <= %s"
             params.append(filter_params['weight'])
         query += " GROUP BY M.mission_id"
 
