@@ -485,7 +485,31 @@ def assignTrainings():
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT T.name, T.training_id, T.code, T.description, T.duration, IFNULL(GROUP_CONCAT(P.code), Null) AS prereq_ids FROM Training T LEFT JOIN Training_Prerequisite_Training ON training_id = train_id LEFT JOIN Training P ON P.training_id = prereq_id GROUP BY T.training_id')
         trainings = cursor.fetchall()   
-        cursor.execute('SELECT * FROM Astronaut A, Person P,Company C WHERE A.id=P.id AND A.company_id=C.id AND A.company_id = %s',(session['userid'],))
+        #cursor.execute('SELECT * FROM Astronaut A, Person P,Company C WHERE A.id=P.id AND A.company_id=C.id AND A.company_id = %s',(session['userid'],))
+        cursor.execute('''
+    SELECT A.id, A.rank, A.nationality,A.years_of_experience,P.first_name, P.middle_name,P.last_name,A.date_of_birth, A.company_id,COALESCE(T1.training_names, '') AS completed_trainings, 
+           COALESCE(T0.training_names, '') AS incomplete_trainings,
+        C.name
+    FROM Astronaut A
+    LEFT JOIN (
+        SELECT AC.astronaut_id, GROUP_CONCAT(T.name ORDER BY T.name SEPARATOR ', ') AS training_names
+        FROM Astronaut_Completes_Training AC
+        JOIN Training T ON AC.training_id = T.training_id
+        WHERE AC.status = 1
+        GROUP BY AC.astronaut_id
+    ) T1 ON A.id = T1.astronaut_id
+    LEFT JOIN (
+        SELECT AC.astronaut_id, GROUP_CONCAT(T.name ORDER BY T.name SEPARATOR ', ') AS training_names
+        FROM Astronaut_Completes_Training AC
+        JOIN Training T ON AC.training_id = T.training_id
+        WHERE AC.status = 0
+        GROUP BY AC.astronaut_id
+    ) T0 ON A.id = T0.astronaut_id
+    JOIN Person P ON A.id = P.id
+    JOIN Company C ON A.company_id = C.id
+    WHERE A.company_id = %s
+''', (session['userid'],))
+
         astronauts = cursor.fetchall()
         return render_template("assign_trainings.html", trainings=trainings, astronauts=astronauts)
     else:
@@ -506,17 +530,17 @@ def assignTrainings():
                 completed_or_not_completed_trainings = [row['training_id'] for row in cursor.fetchall()]
 
 
-            if all(prereq['prereq_id'] in completed_trainings for prereq in prerequisite_trainings) and training_id not in completed_or_not_completed_trainings:
-                cursor.execute('INSERT INTO Astronaut_Completes_Training (astronaut_id, training_id, status) VALUES (%s, %s, 0)', (astronaut_id, training_id))
-                mysql.connection.commit()
-            else:
-                cursor.execute('SELECT * FROM Person WHERE id = %s', (astronaut_id,))
-                astro_name_result = cursor.fetchone()
-                astro_name = astro_name_result['first_name'] +' '+astro_name_result['middle_name'] +' '+ astro_name_result['last_name']
-                astronauts_cant_take.append(astro_name)
-            cursor.execute('SELECT name FROM Training WHERE training_id = %s', (training_id,))
-            training_name_result = cursor.fetchone()
-            training_name = training_name_result['name']
+                if all(prereq['prereq_id'] in completed_trainings for prereq in prerequisite_trainings) and training_id not in completed_or_not_completed_trainings:
+                    cursor.execute('INSERT INTO Astronaut_Completes_Training (astronaut_id, training_id, status) VALUES (%s, %s, 0)', (astronaut_id, training_id))
+                    mysql.connection.commit()
+                else:
+                    cursor.execute('SELECT * FROM Person WHERE id = %s', (astronaut_id,))
+                    astro_name_result = cursor.fetchone()
+                    astro_name = astro_name_result['first_name'] +' '+astro_name_result['middle_name'] +' '+ astro_name_result['last_name']
+                    astronauts_cant_take.append(astro_name)
+                cursor.execute('SELECT name FROM Training WHERE training_id = %s', (training_id,))
+                training_name_result = cursor.fetchone()
+                training_name = training_name_result['name']
             if not astronauts_cant_take:
                 flash(f'All selected astronauts have been assigned to training {training_name}', 'success')
             else:
@@ -622,10 +646,16 @@ def bidForMission():
                 if result:
                     name =  result['title'] + " " + result['rank'] + " " + result['first_name'] + " " + result['last_name']
                     conflicts.append((name, result['title']))  # Append astronaut ID and mission title
-
+                cursor.execute('SELECT training_id FROM Mission_Requires_Training WHERE mission_id = %s', (mission_id,))
+                prerequisite_trainings = cursor.fetchall()
+                cursor.execute('SELECT training_id FROM Astronaut_Completes_Training WHERE astronaut_id = %s AND status = 1', (astronaut_id,))
+                completed_trainings = [row['training_id'] for row in cursor.fetchall()]
+                if not (all(prereq['training_id'] in completed_trainings for prereq in prerequisite_trainings)):
+                    flash(f"Selected astronauts can not be sent to mission because they do not meet the training requirements.", "danger")
+                    return redirect(url_for("bidForMission"))
                 if conflicts:
                     for conflict in conflicts:
-                        flash(f"Astronaut Name {conflict[0]} has a scheduling conflict with mission '{conflict[1]}'.", "error")
+                        flash(f"Astronaut Name {conflict[0]} has a scheduling conflict with mission '{conflict[1]}'.", "danger")
                     return redirect(url_for("bidForMission"))
 
             # If no conflicts, proceed to insert the bid
@@ -809,27 +839,34 @@ def download_report(report_id):
     return Response(report['content'], mimetype="text/plain",
                     headers={"Content-disposition": f"attachment; filename={report['title']}.txt"})
 
-@app.route('/dashboard')
+@app.route('/dashboard', methods=["GET", "POST"])
 def dashboard():
+    
     redirect_if_not_logged_in = check_logged_in()
     redirect_if_not_astronaut = astronaut_pageguard()
     
     if redirect_if_not_logged_in or redirect_if_not_astronaut:
         print("Not logged in or astronaut")
         return redirect_if_not_logged_in
-    
-    user_id = get_user_id()
-    cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cursor.execute("SELECT * FROM Person WHERE id = %s", (user_id,))
-    person = cursor.fetchone()
-    
-    print("CU:",user_id,person)
-    
-    current_trainings, past_trainings = get_trainings(user_id)
-    upcoming_missions, past_missions = get_missions(user_id)
+    if request.method == 'POST':
+        training_id = request.form.get('training_id')
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("UPDATE Astronaut_Completes_Training SET status = 1 WHERE training_id = %s", (training_id,))
+        mysql.connection.commit()
+        return redirect(url_for('dashboard'))
+    else:    
+        user_id = get_user_id()
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT * FROM Person WHERE id = %s", (user_id,))
+        person = cursor.fetchone()
+        
+        print("CU:",user_id,person)
+        
+        current_trainings, past_trainings = get_trainings(user_id)
+        upcoming_missions, past_missions = get_missions(user_id)
 
-    return render_template('dashboard.html', current_trainings=current_trainings, past_trainings=past_trainings,
-                           upcoming_missions=upcoming_missions, past_missions=past_missions, person=person)
+        return render_template('dashboard.html', current_trainings=current_trainings, past_trainings=past_trainings,
+                            upcoming_missions=upcoming_missions, past_missions=past_missions, person=person)
     
 def get_trainings(astronaut_id):
     cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
