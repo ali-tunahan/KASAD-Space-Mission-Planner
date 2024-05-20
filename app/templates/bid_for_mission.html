@@ -171,7 +171,7 @@
                 <input type="number" class="form-control" id="bidAmount{{ mission.mission_id }}" name="bid_amount" min="1" required>
               </div>
               <div class="mb-3">
-                <label class="form-label">Select Astronauts (Required: <span id="requiredCount{{ mission.mission_id }}">{{ mission.num_of_astronauts }}</span>)</label>
+                <label class="form-label">Select Astronauts</label>
                 {% for astronaut in astronauts %}
                 <div class="form-check">
                   <input class="form-check-input astronaut-checkbox" type="checkbox" value="{{ astronaut.id }}" id="astronaut{{ mission.mission_id }}{{ loop.index }}" name="astronaut_ids" data-mission-id="{{ mission.mission_id }}">
@@ -194,27 +194,5 @@
   </div>
   {% endfor %}
 </div>
-
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const updateAstronautSelection = (missionId) => {
-      const checkboxes = document.querySelectorAll(`.astronaut-checkbox[data-mission-id="${missionId}"]:checked`);
-      const messageElement = document.getElementById(`selectionMessage${missionId}`);
-      const requiredCountElement = document.getElementById(`requiredCount${missionId}`);
-      if (requiredCountElement) {
-        const requiredCount = parseInt(requiredCountElement.textContent, 10);
-        const remaining = requiredCount - checkboxes.length;
-        messageElement.textContent = remaining > 0 ? `Select ${remaining} more astronaut${remaining > 1 ? 's' : ''}.` : 'All required astronauts selected.';
-      }
-    };
-  
-    document.querySelectorAll('.astronaut-checkbox').forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        updateAstronautSelection(this.dataset.missionId);
-      });
-    });
-  });
-  </script>
-  
 
 {% endblock %}

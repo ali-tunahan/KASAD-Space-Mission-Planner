@@ -593,7 +593,20 @@ def bidForMission():
         astronaut_ids = request.form.getlist("astronaut_ids")
         mission_id = request.form.get("mission_id")
         user_id = get_user_id()
+        
         print("MISSION ID IS", mission_id)
+        
+        cursor.execute("SELECT num_of_astronauts FROM Mission WHERE mission_id = %s", (mission_id,))
+        mission = cursor.fetchone()
+        required_astronauts = mission['num_of_astronauts'] if mission else 0
+        
+        print(f"Required astronauts: {required_astronauts}, Selected astronauts: {len(astronaut_ids)}")
+
+        # Check if enough astronauts have been selected
+        if len(astronaut_ids) < required_astronauts:
+            flash(f"At least {required_astronauts} astronauts are required for this mission.", "error")
+            return redirect(url_for("bidForMission"))
+    
         try:
             bid_amount = float(bid_amount)
             if bid_amount <= 0:
@@ -632,7 +645,6 @@ def bidForMission():
             cursor.execute("INSERT INTO Bid (bid_id, mission_id, bidder_id, amount, bid_date, status) VALUES (%s, %s, %s, %s, CURDATE(), 'Open')", (bid_id, mission_id, user_id, bid_amount))
             mysql.connection.commit()
             
-        
             for astronaut_id in astronaut_ids:
                 cursor.execute("INSERT INTO Bid_Has_Astronaut (bid_id, id) VALUES (%s, %s)", (bid_id, astronaut_id))
             mysql.connection.commit()
