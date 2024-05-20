@@ -579,11 +579,12 @@ def bidForMission():
         # Prepare query based on filters
         filter_params = request.args
         
-        query = """ SELECT M.*, GROUP_CONCAT(DISTINCT T.name SEPARATOR ', ') AS training_names
+        query = """ SELECT M.*,C.name ,GROUP_CONCAT(DISTINCT T.name SEPARATOR ', ') AS training_names
             FROM Mission M
             LEFT JOIN Mission_Accepted_Bid MAB ON M.mission_id = MAB.mission_id
             LEFT JOIN Mission_Requires_Training MRT on M.mission_id = MRT.mission_id
             LEFT JOIN Training T on MRT.training_id = T.training_id
+            LEFT JOIN Company C on M.employer_id = C.id
             WHERE MAB.bid_id IS NULL
         """
         params = []
