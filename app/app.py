@@ -550,6 +550,36 @@ def assignTrainings():
             print("Error executing SQL query:", e)
 
         return redirect(url_for('assignTrainings'))  # Redirect to the same page after processing
+
+@app.route('/add_training', methods=['POST'])
+def add_training():
+    if request.method == "POST":
+        try:
+            # Extract form data
+            name = request.form['name']
+            code = request.form['code']
+            description = request.form['description']
+            duration = request.form['duration']
+            required_trainings = request.form.getlist('required_trainings[]')
+
+            # Connect to the database
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            random_uuid = uuid.uuid4()
+            
+            # Insert new training into the database
+            cursor.execute('INSERT INTO Training (training_id, name, code, description, duration) VALUES (%s, %s, %s, %s, %s)', (random_uuid, name, code, description, duration))
+            mysql.connection.commit()
+
+            for prereq_id in required_trainings:
+                cursor.execute('INSERT INTO Training_Prerequisite_Training (prereq_id, train_id) VALUES (%s, %s)', (prereq_id, random_uuid))
+
+            mysql.connection.commit()
+            flash('New training added successfully!', 'success')
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Failed to add training: {str(e)}', 'danger')
+
+        return redirect(url_for('assignTrainings'))
     
 @app.route("/bid_for_mission", methods=["GET", "POST"])
 def bidForMission():
@@ -579,11 +609,12 @@ def bidForMission():
         # Prepare query based on filters
         filter_params = request.args
         
-        query = """ SELECT M.*, GROUP_CONCAT(DISTINCT T.name SEPARATOR ', ') AS training_names
+        query = """ SELECT M.*,C.name ,GROUP_CONCAT(DISTINCT T.name SEPARATOR ', ') AS training_names
             FROM Mission M
             LEFT JOIN Mission_Accepted_Bid MAB ON M.mission_id = MAB.mission_id
             LEFT JOIN Mission_Requires_Training MRT on M.mission_id = MRT.mission_id
             LEFT JOIN Training T on MRT.training_id = T.training_id
+            LEFT JOIN Company C on M.employer_id = C.id
             WHERE MAB.bid_id IS NULL
         """
         params = []
@@ -710,16 +741,29 @@ def viewBids():
     if request.method == "POST":
         bid_id = request.form.get('bid_id')
         if bid_id:
-            try:
-                cursor.execute("UPDATE Bid SET status = 'Accepted' WHERE bid_id = %s", (bid_id,))
-                cursor.execute("SELECT mission_id FROM Bid WHERE bid_id = %s", (bid_id,))
-                mission_id = cursor.fetchone()
-                cursor.execute("INSERT INTO Mission_Accepted_Bid (mission_id, bid_id) VALUES (%s, %s)", (mission_id['mission_id'],bid_id,))
-                mysql.connection.commit()
-                flash('Bid accepted successfully!', 'success')
-                #TODO: Accept only one bid
-            except Exception as e:
-                flash(f'Error accepting bid: {str(e)}', 'error')
+            if 'accept' in request.form:
+                try:
+                    cursor.execute("UPDATE Bid SET status = 'Accepted' WHERE bid_id = %s", (bid_id,))
+                    cursor.execute("SELECT mission_id FROM Bid WHERE bid_id = %s", (bid_id,))
+                    mission_id = cursor.fetchone()
+                    cursor.execute("INSERT INTO Mission_Accepted_Bid (mission_id, bid_id) VALUES (%s, %s)", (mission_id['mission_id'],bid_id,))
+                    mysql.connection.commit()
+                    flash('Bid accepted successfully!', 'success')
+                    #TODO: Accept only one bid
+                except Exception as e:
+                    flash(f'Error accepting bid: {str(e)}', 'error')
+            elif 'reject' in request.form:
+                try:
+                    cursor.execute("UPDATE Bid SET status = 'Rejected' WHERE bid_id = %s", (bid_id,))
+                    cursor.execute("SELECT mission_id FROM Bid WHERE bid_id = %s", (bid_id,))
+                    mission_id = cursor.fetchone()
+                    #TODO WE DO NOT ADD THIS TO ANY TABLE
+
+                    mysql.connection.commit()
+                    flash('Bid rejected successfully!', 'success')
+                    #TODO: Accept only one bid
+                except Exception as e:
+                    flash(f'Error accepting bid: {str(e)}', 'error')
         return redirect(url_for('viewBids'))
     
     current_company_id = get_user_id()

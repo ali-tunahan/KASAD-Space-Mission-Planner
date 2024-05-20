@@ -29,6 +29,7 @@ content %}
           <input type="hidden" name="bid_id" value="{{ bid.bid_id }}" />
           <button
             type="submit"
+            name="accept"
             class="btn btn-success"
             {%
             if
@@ -39,6 +40,20 @@ content %}
             %}
           >
             Accept Bid
+          </button>
+          <button
+            type="submit"
+            name="reject"
+            class="btn btn-danger"
+            {%
+            if
+            bid.status
+            !="Open"
+            %}disabled{%
+            endif
+            %}
+          >
+            Reject Bid
           </button>
         </form>
       </div>
