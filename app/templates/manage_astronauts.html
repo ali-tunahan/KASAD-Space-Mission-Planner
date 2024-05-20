@@ -147,10 +147,11 @@
         <div class="col-md">
           <div class="form-floating mb-3">
             <input
-              type="text"
+              type="number"
               class="form-control"
               name="yearsOfExperienceLower"
               id="floatingExperienceLower"
+              min="0"
               placeholder="12-05-1962"
               value="{{ request.args.get('yearsOfExperienceLower', '') }}"
             />
@@ -160,10 +161,11 @@
         <div class="col-md">
           <div class="form-floating">
             <input
-              type="text"
+              type="number"
               class="form-control"
               name="yearsOfExperienceUpper"
               id="floatingExperienceUpper"
+              min="0"
               placeholder="12-05-1991"
               value="{{ request.args.get('yearsOfExperienceUpper', '') }}"
             />
@@ -379,25 +381,25 @@
                         <div class="col">
                           <input
                             name="day"
-                            type="text"
+                            type="number"
                             class="form-control"
-                            value="day"
+                            min="1"
                           />
                         </div>
                         <div class="col">
                           <input
                             name="month"
-                            type="text"
+                            type="number"
                             class="form-control"
-                            value="month"
+                            min="1"
                           />
                         </div>
                         <div class="col">
                           <input
                             name="year"
-                            type="text"
+                            type="number"
                             class="form-control"
-                            value="year"
+                            min="1"
                           />
                         </div>
                       </div>
@@ -459,8 +461,9 @@
                           <input
                             name="exp"
                             id="exp"
-                            type="text"
+                            type="number"
                             class="form-control"
+                            min="0"
                             value="exp"
                           />
                         </div>
