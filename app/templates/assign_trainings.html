@@ -53,6 +53,15 @@
                         <label for="trainingDuration" class="form-label">Duration (in days)</label>
                         <input type="number" class="form-control" id="trainingDuration" name="duration" required>
                     </div>
+                    <div class="mb-3">
+                        <h5>Prerequisite Trainings</h5>
+                        {% for training in trainings %}
+                        <div>
+                            <input type="checkbox" id="training_{{ training.training_id }}" name="required_trainings[]" value="{{ training.training_id }}" />
+                            <label for="training_{{ training.training_id }}">{{ training.name }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         <button type="submit" class="btn btn-primary">Save Training</button>

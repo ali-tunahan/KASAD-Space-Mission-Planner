@@ -553,25 +553,33 @@ def assignTrainings():
 
 @app.route('/add_training', methods=['POST'])
 def add_training():
-    try:
-        # Extract form data
-        name = request.form['name']
-        code = request.form['code']
-        description = request.form['description']
-        duration = request.form['duration']
+    if request.method == "POST":
+        try:
+            # Extract form data
+            name = request.form['name']
+            code = request.form['code']
+            description = request.form['description']
+            duration = request.form['duration']
+            required_trainings = request.form.getlist('required_trainings[]')
 
-        # Connect to the database
-        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-        random_uuid = uuid.uuid4()
-        # Insert new training into the database
-        cursor.execute('INSERT INTO Training (training_id, name, code, description, duration) VALUES (%s, %s, %s, %s, %s)', (random_uuid, name, code, description, duration))
-        mysql.connection.commit()
-        flash('New training added successfully!', 'success')
-    except Exception as e:
-        mysql.connection.rollback()
-        flash(f'Failed to add training: {str(e)}', 'danger')
+            # Connect to the database
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            random_uuid = uuid.uuid4()
+            
+            # Insert new training into the database
+            cursor.execute('INSERT INTO Training (training_id, name, code, description, duration) VALUES (%s, %s, %s, %s, %s)', (random_uuid, name, code, description, duration))
+            mysql.connection.commit()
 
-    return redirect(url_for('assignTrainings'))
+            for prereq_id in required_trainings:
+                cursor.execute('INSERT INTO Training_Prerequisite_Training (prereq_id, train_id) VALUES (%s, %s)', (prereq_id, random_uuid))
+
+            mysql.connection.commit()
+            flash('New training added successfully!', 'success')
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Failed to add training: {str(e)}', 'danger')
+
+        return redirect(url_for('assignTrainings'))
     
 @app.route("/bid_for_mission", methods=["GET", "POST"])
 def bidForMission():
