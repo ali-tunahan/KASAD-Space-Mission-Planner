@@ -656,25 +656,6 @@ def bidForMission():
             if bid_amount <= 0:
                 flash("Bid amount must be greater than $0.", "error")
                 return redirect(url_for("bidForMission"))
-            
-            cursor.execute("""
-            SELECT SUM(B.amount) AS total_open_bids
-            FROM Bid B
-            WHERE B.bidder_id = %s AND B.status = 'Open'
-            """, (user_id,))
-            result = cursor.fetchone()
-            total_open_bids = result['total_open_bids'] if result['total_open_bids'] else 0
-
-            cursor.execute("""
-            SELECT balance
-            FROM Company
-            WHERE id = %s
-            """, (user_id,))
-            company_balance = cursor.fetchone()['balance']
-
-            if float(total_open_bids) + bid_amount > company_balance:
-                flash(f"Cannot place bid. Total open bids would exceed your budget of ${company_balance}.", "error")
-                return redirect(url_for("bidForMission"))
     
             # Check for scheduling conflicts before inserting the bid
             cursor.execute("SELECT * FROM Mission where mission_id = %s", (mission_id,))
@@ -753,6 +734,17 @@ def viewBids():
                     mission_id = bid_info['mission_id']
                     amount = bid_info['amount']
                     bidder_id = bid_info['bidder_id']
+                    
+                    company_id = get_user_id()
+                    
+                    cursor.execute("SELECT * FROM Company WHERE id = %s", (company_id,))
+                    company_info = cursor.fetchone()
+                    company_balance = company_info['balance']
+
+                    if company_balance < amount:
+                        mysql.connection.rollback()
+                        flash(f"Error accepting bid: Company balance (${company_balance}) is insufficient to cover the bid amount (${amount}).", 'error')
+                        return redirect(url_for('viewBids'))
 
                 # Reject all other bids for this mission
                     cursor.execute("""
@@ -778,6 +770,7 @@ def viewBids():
                     INSERT INTO Transaction (transaction_id, bidder_id, employer_id, date, amount, status)
                     VALUES (%s, %s, %s, CURDATE(), %s, 'Open')
                     """, (transaction_id, bidder_id, employer_id, amount))
+                    
                 # Commit the transaction to the database
                     mysql.connection.commit()
                     flash('Bid accepted successfully!', 'success')
