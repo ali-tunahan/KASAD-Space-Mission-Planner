@@ -1,11 +1,14 @@
-{% extends "master.html" %} {% block title %} View Bids {% endblock %} {% block
+{% extends "master.html" %} {% block title %}View Bids{% endblock %} {% block
 content %}
 <div class="container-fluid py-4 px-5">
-  <h1>Incoming Bids</h1>
+  <h1>Bids Overview</h1>
   {% with messages = get_flashed_messages(with_categories=true) %} {% if
   messages %} {% for category, message in messages %}
   <div class="alert alert-{{ category }}">{{ message }}</div>
-  {% endfor %} {% endif %} {% endwith %} {% for bid in bids %}
+  {% endfor %} {% endif %} {% endwith %}
+
+  <h2>Incoming Bids</h2>
+  {% if incoming_bids %} {% for bid in incoming_bids %}
   <div
     class="mission-item"
     style="
@@ -59,8 +62,53 @@ content %}
       </div>
     </div>
   </div>
-  {% else %}
-  <p>No bids available.</p>
-  {% endfor %}
+  {% endfor %} {% else %}
+  <p>No incoming bids available.</p>
+  {% endif %}
+
+  <h2>Outgoing Bids</h2>
+  {% if outgoing_bids %} {% for bid in outgoing_bids %}
+  <div
+    class="mission-item"
+    style="
+      background-color: #33333f;
+      color: white;
+      padding: 10px;
+      margin-bottom: 5px;
+      border-radius: 5px;
+    "
+  >
+    <div class="row">
+      <div class="col-md-8">
+        <h5>{{ bid.mission_title }}</h5>
+        <p><strong>Employer:</strong> {{ bid.company_name }}</p>
+        <p><strong>Bid Amount:</strong> ${{ bid.amount }}</p>
+        <p><strong>Date:</strong> {{ bid.bid_date.strftime('%Y-%m-%d') }}</p>
+        <p><strong>Status:</strong> {{ bid.status }}</p>
+      </div>
+      <div class="col-md-4 text-right">
+        <form action="{{ url_for('viewBids') }}" method="post">
+          <input type="hidden" name="bid_id" value="{{ bid.bid_id }}" />
+          <button
+            type="submit"
+            name="withdraw"
+            class="btn btn-danger"
+            {%
+            if
+            bid.status
+            !="Open"
+            %}disabled{%
+            endif
+            %}
+          >
+            Withdraw Bid
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %} {% else %}
+  <p>No outgoing bids available.</p>
+  {% endif %}
 </div>
 {% endblock %}

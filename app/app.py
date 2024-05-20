@@ -780,29 +780,51 @@ def viewBids():
                     mysql.connection.rollback()
                     flash(f'Error accepting bid: {str(e)}', 'error')
 
-        elif 'reject' in request.form:
-            try:
+            elif 'reject' in request.form:
+                try:
                 # Reject the selected bid
-                cursor.execute("UPDATE Bid SET status = 'Rejected' WHERE bid_id = %s", (bid_id,))
-                mysql.connection.commit()
-                flash('Bid rejected successfully!', 'success')
-            except Exception as e:
-                flash(f'Error rejecting bid: {str(e)}', 'error')
-
+                    cursor.execute("UPDATE Bid SET status = 'Rejected' WHERE bid_id = %s", (bid_id,))
+                    mysql.connection.commit()
+                    flash('Bid rejected successfully!', 'success')
+                except Exception as e:
+                    flash(f'Error rejecting bid: {str(e)}', 'error')
+            elif 'withdraw' in request.form:
+                print("bid is: ", bid_id)
+                try:
+                # Withdraw the selected bid
+                    cursor.execute("UPDATE Bid SET status = 'Withdrawn' WHERE bid_id = %s", (bid_id,))
+                    mysql.connection.commit()
+                    flash('Bid withdrawn successfully!', 'success')
+                except Exception as e:
+                    flash(f'Error rejecting bid: {str(e)}', 'error')
+                
         return redirect(url_for('viewBids'))
 
     current_company_id = get_user_id()
+    # Retrieve outgoing bids for the current company
     cursor.execute('''
-        SELECT Bid.bid_id, Bid.amount, Bid.bid_date, Bid.status, Mission.title AS mission_title, Company.name AS company_name, employer_id
+        SELECT Bid.bid_id, Bid.amount, Bid.bid_date, Bid.status, Mission.title AS mission_title, Company.name AS company_name
         FROM Bid
         INNER JOIN Mission ON Bid.mission_id = Mission.mission_id
-        INNER JOIN Bidder ON Bid.bidder_id = Bidder.id
-        INNER JOIN Company ON Bidder.id = Company.id
+        INNER JOIN Company ON Mission.employer_id = Company.id
+        WHERE Bid.bidder_id = %s
+        ORDER BY Bid.bid_date DESC
+    ''', (current_company_id,))
+    outgoing_bids = cursor.fetchall()
+
+    # Retrieve incoming bids if the current company is the employer
+    cursor.execute('''
+        SELECT Bid.bid_id, Bid.amount, Bid.bid_date, Bid.status, Mission.title AS mission_title, Company.name AS company_name
+        FROM Bid
+        INNER JOIN Mission ON Bid.mission_id = Mission.mission_id
+        INNER JOIN Company ON Bid.bidder_id = Company.id
         WHERE Mission.employer_id = %s
         ORDER BY Bid.amount DESC
-    ''',(current_company_id,))
-    bids = cursor.fetchall()
-    return render_template("view_bids.html", bids=bids)
+    ''', (current_company_id,))
+    incoming_bids = cursor.fetchall()
+
+    return render_template("view_bids.html", incoming_bids=incoming_bids, outgoing_bids=outgoing_bids)
+
 
 @app.route("/admin_page", methods=["GET", "POST"])
 def admin():
