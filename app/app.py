@@ -609,11 +609,12 @@ def bidForMission():
         # Prepare query based on filters
         filter_params = request.args
         
-        query = """ SELECT M.*, GROUP_CONCAT(DISTINCT T.name SEPARATOR ', ') AS training_names
+        query = """ SELECT M.*,C.name ,GROUP_CONCAT(DISTINCT T.name SEPARATOR ', ') AS training_names
             FROM Mission M
             LEFT JOIN Mission_Accepted_Bid MAB ON M.mission_id = MAB.mission_id
             LEFT JOIN Mission_Requires_Training MRT on M.mission_id = MRT.mission_id
             LEFT JOIN Training T on MRT.training_id = T.training_id
+            LEFT JOIN Company C on M.employer_id = C.id
             WHERE MAB.bid_id IS NULL
         """
         params = []
@@ -645,10 +646,12 @@ def bidForMission():
     elif request.method == "POST":
         bid_amount = request.form.get("bid_amount")
         astronaut_ids = request.form.getlist("astronaut_ids")
+        print("asrton ID IS", len(astronaut_ids))
         mission_id = request.form.get("mission_id")
         user_id = get_user_id()
         print("MISSION ID IS", mission_id)
         try:
+            
             bid_amount = float(bid_amount)
             if bid_amount <= 0:
                 flash("Bid amount must be greater than $0.", "error")
@@ -657,7 +660,9 @@ def bidForMission():
             # Check for scheduling conflicts before inserting the bid
             cursor.execute("SELECT * FROM Mission where mission_id = %s", (mission_id,))
             current_mission = cursor.fetchone()
-            
+            if len(astronaut_ids) < current_mission['num_of_astronauts'] or not astronaut_ids:
+                    flash(f"Number of selected astronauts is not sufficient.", "danger")
+                    return redirect(url_for("bidForMission"))
             conflicts = []
             for astronaut_id in astronaut_ids:
                 cursor.execute("""
@@ -686,16 +691,17 @@ def bidForMission():
                     for conflict in conflicts:
                         flash(f"Astronaut Name {conflict[0]} has a scheduling conflict with mission '{conflict[1]}'.", "danger")
                     return redirect(url_for("bidForMission"))
-
+                print("Length of dictionary:",len(astronaut_ids))
             # If no conflicts, proceed to insert the bid
             bid_id = uuid.uuid4().hex
             cursor.execute("INSERT INTO Bid (bid_id, mission_id, bidder_id, amount, bid_date, status) VALUES (%s, %s, %s, %s, CURDATE(), 'Open')", (bid_id, mission_id, user_id, bid_amount))
             mysql.connection.commit()
             
-        
+
             for astronaut_id in astronaut_ids:
                 cursor.execute("INSERT INTO Bid_Has_Astronaut (bid_id, id) VALUES (%s, %s)", (bid_id, astronaut_id))
             mysql.connection.commit()
+            flash(f"Bid submitted succesfully.", "success")
             return redirect(url_for("bidForMission"))
                 
         except ValueError as e:
@@ -718,6 +724,9 @@ def viewBids():
         if bid_id:
             try:
                 cursor.execute("UPDATE Bid SET status = 'Accepted' WHERE bid_id = %s", (bid_id,))
+                cursor.execute("SELECT mission_id FROM Bid WHERE bid_id = %s", (bid_id,))
+                mission_id = cursor.fetchone()
+                cursor.execute("INSERT INTO Mission_Accepted_Bid (mission_id, bid_id) VALUES (%s, %s)", (mission_id['mission_id'],bid_id,))
                 mysql.connection.commit()
                 flash('Bid accepted successfully!', 'success')
                 #TODO: Accept only one bid
