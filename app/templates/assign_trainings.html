@@ -14,7 +14,12 @@
 </ul>
 {% endif %}
 {% endwith %}
-<h1>ASSIGN TRAINING</h1>
+<h1>ASSIGN TRAINING
+    <!-- Button trigger modal for adding new training -->
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#newTrainingModal">
+        New Training
+    </button>
+</h1>
 <style>
     /* Custom CSS to change text color to black */
     .collapse .card-body,
@@ -22,6 +27,50 @@
         color: black;
     }
 </style>
+<!-- Modal for adding new training -->
+<div class="modal fade" id="newTrainingModal" tabindex="-1" aria-labelledby="newTrainingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newTrainingModalLabel" style="color: black;">Add New Training</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newTrainingForm" method="POST" action="/add_training">
+                    <div class="mb-3">
+                        <label for="trainingName" class="form-label">Training Name</label>
+                        <input type="text" class="form-control" id="trainingName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="trainingCode" class="form-label">Training Code</label>
+                        <input type="text" class="form-control" id="trainingCode" name="code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="trainingDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="trainingDescription" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="trainingDuration" class="form-label">Duration (in days)</label>
+                        <input type="number" class="form-control" id="trainingDuration" name="duration" required>
+                    </div>
+                    <div class="mb-3">
+                        <h5>Prerequisite Trainings</h5>
+                        {% for training in trainings %}
+                        <div>
+                            <input type="checkbox" id="training_{{ training.training_id }}" name="required_trainings[]" value="{{ training.training_id }}" />
+                            <label for="training_{{ training.training_id }}">{{ training.name }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Training</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {%for training in trainings%}
 <div class="card w-51 mb-3">
     <div class="card-body d-flex justify-content-between align-items-center">

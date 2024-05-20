@@ -550,6 +550,36 @@ def assignTrainings():
             print("Error executing SQL query:", e)
 
         return redirect(url_for('assignTrainings'))  # Redirect to the same page after processing
+
+@app.route('/add_training', methods=['POST'])
+def add_training():
+    if request.method == "POST":
+        try:
+            # Extract form data
+            name = request.form['name']
+            code = request.form['code']
+            description = request.form['description']
+            duration = request.form['duration']
+            required_trainings = request.form.getlist('required_trainings[]')
+
+            # Connect to the database
+            cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+            random_uuid = uuid.uuid4()
+            
+            # Insert new training into the database
+            cursor.execute('INSERT INTO Training (training_id, name, code, description, duration) VALUES (%s, %s, %s, %s, %s)', (random_uuid, name, code, description, duration))
+            mysql.connection.commit()
+
+            for prereq_id in required_trainings:
+                cursor.execute('INSERT INTO Training_Prerequisite_Training (prereq_id, train_id) VALUES (%s, %s)', (prereq_id, random_uuid))
+
+            mysql.connection.commit()
+            flash('New training added successfully!', 'success')
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Failed to add training: {str(e)}', 'danger')
+
+        return redirect(url_for('assignTrainings'))
     
 @app.route("/bid_for_mission", methods=["GET", "POST"])
 def bidForMission():
@@ -626,6 +656,25 @@ def bidForMission():
             if bid_amount <= 0:
                 flash("Bid amount must be greater than $0.", "error")
                 return redirect(url_for("bidForMission"))
+            
+            cursor.execute("""
+            SELECT SUM(B.amount) AS total_open_bids
+            FROM Bid B
+            WHERE B.bidder_id = %s AND B.status = 'Open'
+            """, (user_id,))
+            result = cursor.fetchone()
+            total_open_bids = result['total_open_bids'] if result['total_open_bids'] else 0
+
+            cursor.execute("""
+            SELECT balance
+            FROM Company
+            WHERE id = %s
+            """, (user_id,))
+            company_balance = cursor.fetchone()['balance']
+
+            if float(total_open_bids) + bid_amount > company_balance:
+                flash(f"Cannot place bid. Total open bids would exceed your budget of ${company_balance}.", "error")
+                return redirect(url_for("bidForMission"))
     
             # Check for scheduling conflicts before inserting the bid
             cursor.execute("SELECT * FROM Mission where mission_id = %s", (mission_id,))
@@ -650,7 +699,7 @@ def bidForMission():
                 if result:
                     name =  result['title'] + " " + result['rank'] + " " + result['first_name'] + " " + result['last_name']
                     conflicts.append((name, result['title']))  # Append astronaut ID and mission title
-                cursor.execute('SELECT training_id FROM Mission_Requires_Training WHERE mission_id = %s', (mission_id,))
+                cursor.execute('SELECT training_id FROM  Mission_Requires_Training WHERE mission_id = %s', (mission_id,))
                 prerequisite_trainings = cursor.fetchall()
                 cursor.execute('SELECT training_id FROM Astronaut_Completes_Training WHERE astronaut_id = %s AND status = 1', (astronaut_id,))
                 completed_trainings = [row['training_id'] for row in cursor.fetchall()]
@@ -694,29 +743,61 @@ def viewBids():
         if bid_id:
             if 'accept' in request.form:
                 try:
+                    # Start a transaction
+                    mysql.connection.begin()
+
+                    # Accept the selected bid
                     cursor.execute("UPDATE Bid SET status = 'Accepted' WHERE bid_id = %s", (bid_id,))
-                    cursor.execute("SELECT mission_id FROM Bid WHERE bid_id = %s", (bid_id,))
-                    mission_id = cursor.fetchone()
-                    cursor.execute("INSERT INTO Mission_Accepted_Bid (mission_id, bid_id) VALUES (%s, %s)", (mission_id['mission_id'],bid_id,))
+                    cursor.execute("SELECT mission_id, amount, bidder_id FROM Bid WHERE bid_id = %s", (bid_id,))
+                    bid_info = cursor.fetchone()
+                    mission_id = bid_info['mission_id']
+                    amount = bid_info['amount']
+                    bidder_id = bid_info['bidder_id']
+
+                # Reject all other bids for this mission
+                    cursor.execute("""
+                    UPDATE Bid 
+                    SET status = 'Rejected'
+                    WHERE mission_id = %s AND bid_id <> %s
+                """, (mission_id, bid_id,))
+                    
+                    cursor.execute("SELECT * FROM Mission WHERE mission_id = %s", (mission_id,))
+                    mission_details = cursor.fetchone()
+                    employer_id = mission_details['employer_id']
+
+                # Link the accepted bid to the mission
+                    cursor.execute("""
+                    INSERT INTO Mission_Accepted_Bid (mission_id, bid_id)
+                    VALUES (%s, %s)
+                """, (mission_id, bid_id,))
+                    mysql.connection.commit()
+                # (transaction_id, bidder_id, employer_id, date, amount, status)
+                # Record a transaction for the accepted bid
+                    transaction_id = uuid.uuid4().hex
+                    cursor.execute("""
+                    INSERT INTO Transaction (transaction_id, bidder_id, employer_id, date, amount, status)
+                    VALUES (%s, %s, %s, CURDATE(), %s, 'Open')
+                    """, (transaction_id, bidder_id, employer_id, amount))
+                # Commit the transaction to the database
                     mysql.connection.commit()
                     flash('Bid accepted successfully!', 'success')
-                    #TODO: Accept only one bid
-                except Exception as e:
-                    flash(f'Error accepting bid: {str(e)}', 'error')
-            elif 'reject' in request.form:
-                try:
-                    cursor.execute("UPDATE Bid SET status = 'Rejected' WHERE bid_id = %s", (bid_id,))
-                    cursor.execute("SELECT mission_id FROM Bid WHERE bid_id = %s", (bid_id,))
-                    mission_id = cursor.fetchone()
-                    #TODO WE DO NOT ADD THIS TO ANY TABLE
 
-                    mysql.connection.commit()
-                    flash('Bid rejected successfully!', 'success')
-                    #TODO: Accept only one bid
                 except Exception as e:
+                # Roll back in case of any error
+                    mysql.connection.rollback()
                     flash(f'Error accepting bid: {str(e)}', 'error')
+
+        elif 'reject' in request.form:
+            try:
+                # Reject the selected bid
+                cursor.execute("UPDATE Bid SET status = 'Rejected' WHERE bid_id = %s", (bid_id,))
+                mysql.connection.commit()
+                flash('Bid rejected successfully!', 'success')
+            except Exception as e:
+                flash(f'Error rejecting bid: {str(e)}', 'error')
+
         return redirect(url_for('viewBids'))
-    
+
     current_company_id = get_user_id()
     cursor.execute('''
         SELECT Bid.bid_id, Bid.amount, Bid.bid_date, Bid.status, Mission.title AS mission_title, Company.name AS company_name, employer_id
