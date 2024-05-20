@@ -164,24 +164,23 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <form method="POST" action="{{ url_for('bidForMission') }}">
+            <form method="POST" action="{{ url_for('bidForMission') }}" class="bid-form">
               <input type="hidden" name="mission_id" value="{{ mission.mission_id }}">
               <div class="mb-3">
                 <label for="bidAmount{{ mission.mission_id }}" class="form-label">Bid Amount ($)</label>
                 <input type="number" class="form-control" id="bidAmount{{ mission.mission_id }}" name="bid_amount" min="1" required>
               </div>
               <div class="mb-3">
-                <label for="astronaut{{ mission.mission_id }}" class="form-label">Select Astronauts</label>
-                <select multiple class="form-select" id="astronaut{{ mission.mission_id }}" name="astronaut_ids">
-                  {% for astronaut in astronauts %}
-
-                  <option value="{{ astronaut.id }}">
-                    {{astronaut.rank}} {{ astronaut.first_name }} {{
-                    astronaut.last_name }}
-                  </option>
-
-                  {% endfor %}
-                </select>
+                <label class="form-label">Select Astronauts (Required: <span id="requiredCount{{ mission.mission_id }}">{{ mission.num_of_astronauts }}</span>)</label>
+                {% for astronaut in astronauts %}
+                <div class="form-check">
+                  <input class="form-check-input astronaut-checkbox" type="checkbox" value="{{ astronaut.id }}" id="astronaut{{ mission.mission_id }}{{ loop.index }}" name="astronaut_ids" data-mission-id="{{ mission.mission_id }}">
+                  <label class="form-check-label" for="astronaut{{ mission.mission_id }}{{ loop.index }}">
+                    {{ astronaut.rank }} {{ astronaut.first_name }} {{ astronaut.last_name }}
+                  </label>
+                </div>
+                {% endfor %}
+                <small id="selectionMessage{{ mission.mission_id }}">Select {{ mission.num_of_astronauts }} astronauts.</small>
               </div>
               <div class="modal-footer">
                 <button type="submit" class="btn btn-primary">Submit Bid</button>
@@ -195,5 +194,27 @@
   </div>
   {% endfor %}
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const updateAstronautSelection = (missionId) => {
+      const checkboxes = document.querySelectorAll(`.astronaut-checkbox[data-mission-id="${missionId}"]:checked`);
+      const messageElement = document.getElementById(`selectionMessage${missionId}`);
+      const requiredCountElement = document.getElementById(`requiredCount${missionId}`);
+      if (requiredCountElement) {
+        const requiredCount = parseInt(requiredCountElement.textContent, 10);
+        const remaining = requiredCount - checkboxes.length;
+        messageElement.textContent = remaining > 0 ? `Select ${remaining} more astronaut${remaining > 1 ? 's' : ''}.` : 'All required astronauts selected.';
+      }
+    };
+  
+    document.querySelectorAll('.astronaut-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        updateAstronautSelection(this.dataset.missionId);
+      });
+    });
+  });
+  </script>
+  
 
 {% endblock %}

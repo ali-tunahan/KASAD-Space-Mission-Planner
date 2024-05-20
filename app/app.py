@@ -312,7 +312,6 @@ def createMission():
 
     return render_template("create_mission.html", trainings=trainings)
 
-
 @app.route("/manage_astronauts", methods=["GET", "POST", "DELETE"])
 def manageAstronauts():
     redirect_if_not_logged_in = check_logged_in()
@@ -583,10 +582,11 @@ def bidForMission():
         company_id = get_user_id()
         cursor.execute("SELECT * FROM Astronaut JOIN Person ON Astronaut.id = Person.id WHERE company_id = %s ", (company_id,))
         astronauts = cursor.fetchall()
+        num_available_astronauts = len(astronauts)
         
         print(astronauts)
 
-        return render_template("bid_for_mission.html", missions=missions, launch_date_range=launch_date_range, duration_range=duration_range, volume_range=volume_range, weight_range=weight_range, astronauts=astronauts)
+        return render_template("bid_for_mission.html", missions=missions, launch_date_range=launch_date_range, duration_range=duration_range, volume_range=volume_range, weight_range=weight_range, astronauts=astronauts, num_available_astronauts=num_available_astronauts)
 
     elif request.method == "POST":
         bid_amount = request.form.get("bid_amount")
