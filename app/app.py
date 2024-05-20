@@ -687,13 +687,29 @@ def viewBids():
     if request.method == "POST":
         bid_id = request.form.get('bid_id')
         if bid_id:
-            try:
-                cursor.execute("UPDATE Bid SET status = 'Accepted' WHERE bid_id = %s", (bid_id,))
-                mysql.connection.commit()
-                flash('Bid accepted successfully!', 'success')
-                #TODO: Accept only one bid
-            except Exception as e:
-                flash(f'Error accepting bid: {str(e)}', 'error')
+            if 'accept' in request.form:
+                try:
+                    cursor.execute("UPDATE Bid SET status = 'Accepted' WHERE bid_id = %s", (bid_id,))
+                    cursor.execute("SELECT mission_id FROM Bid WHERE bid_id = %s", (bid_id,))
+                    mission_id = cursor.fetchone()
+                    cursor.execute("INSERT INTO Mission_Accepted_Bid (mission_id, bid_id) VALUES (%s, %s)", (mission_id['mission_id'],bid_id,))
+                    mysql.connection.commit()
+                    flash('Bid accepted successfully!', 'success')
+                    #TODO: Accept only one bid
+                except Exception as e:
+                    flash(f'Error accepting bid: {str(e)}', 'error')
+            elif 'reject' in request.form:
+                try:
+                    cursor.execute("UPDATE Bid SET status = 'Rejected' WHERE bid_id = %s", (bid_id,))
+                    cursor.execute("SELECT mission_id FROM Bid WHERE bid_id = %s", (bid_id,))
+                    mission_id = cursor.fetchone()
+                    #TODO WE DO NOT ADD THIS TO ANY TABLE
+
+                    mysql.connection.commit()
+                    flash('Bid rejected successfully!', 'success')
+                    #TODO: Accept only one bid
+                except Exception as e:
+                    flash(f'Error accepting bid: {str(e)}', 'error')
         return redirect(url_for('viewBids'))
     
     current_company_id = get_user_id()
