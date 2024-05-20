@@ -16,6 +16,33 @@ content %}
     Phone: ({{ company['area_code'] }}) {{ company['phone_number'] }}
   </div>
   <div class="mb-3">Balance: ${{ company['balance'] }}</div>
+  {% if not astronaut %}
+  <div class="container mt-5">
+    <div class="section-header">Accepted Missions</div>
+    <div class="section-container centered-list">
+        <ul class="list-group">
+            {% for mission in missions %}
+            <li class="list-group-item text-center">
+                Title: {{ mission.title }}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<div class="container mt-3">
+    <div class="section-header">Accepted Bids</div>
+    <div class="section-container centered-list">
+        <ul class="list-group">
+            {% for bid in bids %}
+            <li class="list-group-item text-center">
+                Title: {{ bid.title }} Assigned to: {{ bid.name }}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
   {% endif %} {% if person %}
   <h2 class="mb-4">
     {{ [person['title'] or '', person['first_name'] or '', person['middle_name']

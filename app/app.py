@@ -118,16 +118,22 @@ def main():
     if(type == "company"):
         cursor.execute("SELECT * FROM Company WHERE id = %s", (user_id,))
         company = cursor.fetchone()
+        cursor.execute("SELECT * FROM Mission_Accepted_Bid MA,Mission M,Bid B WHERE M.mission_id = MA.mission_id AND B.mission_id = MA.mission_id AND B.bidder_id = %s", (session['userid'],))
+        missions = cursor.fetchall()
+        cursor.execute("SELECT * FROM Mission_Accepted_Bid MA, Mission M, Bid B,Company C WHERE M.mission_id = MA.mission_id AND M.employer_id = %s AND B.mission_id=M.mission_id AND C.id = B.bidder_id", (session['userid'],))
+        bids = cursor.fetchall()
+        return render_template("main.html", person = person, company=company, astronaut = astronaut, missions=missions,bids=bids)
     elif(type == 'astronaut'):
         cursor.execute("SELECT * FROM Person WHERE id = %s", (user_id,))
         person = cursor.fetchone()
-    
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute("SELECT * FROM Astronaut WHERE id = %s", (user_id,))
         astronaut = cursor.fetchone()
         print(astronaut)
         cursor.execute("SELECT * FROM Company WHERE id = %s", (astronaut['company_id'],))
         company = cursor.fetchone()
+        
+    
     
     return render_template("main.html", person = person, company=company, astronaut = astronaut)
 
