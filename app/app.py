@@ -625,6 +625,25 @@ def bidForMission():
             if bid_amount <= 0:
                 flash("Bid amount must be greater than $0.", "error")
                 return redirect(url_for("bidForMission"))
+            
+            cursor.execute("""
+            SELECT SUM(B.amount) AS total_open_bids
+            FROM Bid B
+            WHERE B.bidder_id = %s AND B.status = 'Open'
+            """, (user_id,))
+            result = cursor.fetchone()
+            total_open_bids = result['total_open_bids'] if result['total_open_bids'] else 0
+
+            cursor.execute("""
+            SELECT balance
+            FROM Company
+            WHERE id = %s
+            """, (user_id,))
+            company_balance = cursor.fetchone()['balance']
+
+            if float(total_open_bids) + bid_amount > company_balance:
+                flash(f"Cannot place bid. Total open bids would exceed your budget of ${company_balance}.", "error")
+                return redirect(url_for("bidForMission"))
     
             # Check for scheduling conflicts before inserting the bid
             cursor.execute("SELECT * FROM Mission where mission_id = %s", (mission_id,))
@@ -649,7 +668,7 @@ def bidForMission():
                 if result:
                     name =  result['title'] + " " + result['rank'] + " " + result['first_name'] + " " + result['last_name']
                     conflicts.append((name, result['title']))  # Append astronaut ID and mission title
-                cursor.execute('SELECT training_id FROM Mission_Requires_Training WHERE mission_id = %s', (mission_id,))
+                cursor.execute('SELECT training_id FROM  Mission_Requires_Training WHERE mission_id = %s', (mission_id,))
                 prerequisite_trainings = cursor.fetchall()
                 cursor.execute('SELECT training_id FROM Astronaut_Completes_Training WHERE astronaut_id = %s AND status = 1', (astronaut_id,))
                 completed_trainings = [row['training_id'] for row in cursor.fetchall()]
