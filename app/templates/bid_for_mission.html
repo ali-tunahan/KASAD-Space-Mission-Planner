@@ -164,14 +164,14 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <form method="POST" action="{{ url_for('bidForMission') }}" class="bid-form">
+            <form method="POST" action="{{ url_for('bidForMission') }}" class="bid-form" onsubmit="return validateAstronautCount(this);">
               <input type="hidden" name="mission_id" value="{{ mission.mission_id }}">
               <div class="mb-3">
                 <label for="bidAmount{{ mission.mission_id }}" class="form-label">Bid Amount ($)</label>
                 <input type="number" class="form-control" id="bidAmount{{ mission.mission_id }}" name="bid_amount" min="1" required>
               </div>
               <div class="mb-3">
-                <label class="form-label">Select Astronauts</label>
+                <label class="form-label">Select Astronauts (Required: <span id="requiredCount{{ mission.mission_id }}">{{ mission.num_of_astronauts }}</span>)</label>
                 {% for astronaut in astronauts %}
                 <div class="form-check">
                   <input class="form-check-input astronaut-checkbox" type="checkbox" value="{{ astronaut.id }}" id="astronaut{{ mission.mission_id }}{{ loop.index }}" name="astronaut_ids" data-mission-id="{{ mission.mission_id }}">
@@ -194,5 +194,23 @@
   </div>
   {% endfor %}
 </div>
+
+<script>
+  function validateAstronautCount(form) {
+    console.log("Validation function called");
+    const missionId = form.querySelector('input[name="mission_id"]').value;
+    const requiredCountElement = document.getElementById(`requiredCount${missionId}`);
+    const requiredCount = parseInt(requiredCountElement.textContent, 10);
+    const checkboxes = document.querySelectorAll(`input[name="astronaut_ids"][data-mission-id="${missionId}"]:checked`);
+    console.log("Required Count:", requiredCount);
+    console.log("Checked Count:", checkboxes.length);
+
+    if (checkboxes.length != requiredCount) {
+        alert(`At least ${requiredCount} astronauts are required for this mission.`);
+        return false; // Prevents the form from submission
+    }
+    return true; 
+</script>
+  
 
 {% endblock %}
