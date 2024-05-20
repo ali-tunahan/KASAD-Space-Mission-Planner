@@ -485,7 +485,31 @@ def assignTrainings():
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT T.name, T.training_id, T.code, T.description, T.duration, IFNULL(GROUP_CONCAT(P.code), Null) AS prereq_ids FROM Training T LEFT JOIN Training_Prerequisite_Training ON training_id = train_id LEFT JOIN Training P ON P.training_id = prereq_id GROUP BY T.training_id')
         trainings = cursor.fetchall()   
-        cursor.execute('SELECT * FROM Astronaut A, Person P,Company C WHERE A.id=P.id AND A.company_id=C.id AND A.company_id = %s',(session['userid'],))
+        #cursor.execute('SELECT * FROM Astronaut A, Person P,Company C WHERE A.id=P.id AND A.company_id=C.id AND A.company_id = %s',(session['userid'],))
+        cursor.execute('''
+    SELECT A.id, A.rank, A.nationality,A.years_of_experience,P.first_name, P.middle_name,P.last_name,A.date_of_birth, A.company_id,COALESCE(T1.training_names, '') AS completed_trainings, 
+           COALESCE(T0.training_names, '') AS incomplete_trainings,
+        C.name
+    FROM Astronaut A
+    LEFT JOIN (
+        SELECT AC.astronaut_id, GROUP_CONCAT(T.name ORDER BY T.name SEPARATOR ', ') AS training_names
+        FROM Astronaut_Completes_Training AC
+        JOIN Training T ON AC.training_id = T.training_id
+        WHERE AC.status = 1
+        GROUP BY AC.astronaut_id
+    ) T1 ON A.id = T1.astronaut_id
+    LEFT JOIN (
+        SELECT AC.astronaut_id, GROUP_CONCAT(T.name ORDER BY T.name SEPARATOR ', ') AS training_names
+        FROM Astronaut_Completes_Training AC
+        JOIN Training T ON AC.training_id = T.training_id
+        WHERE AC.status = 0
+        GROUP BY AC.astronaut_id
+    ) T0 ON A.id = T0.astronaut_id
+    JOIN Person P ON A.id = P.id
+    JOIN Company C ON A.company_id = C.id
+    WHERE A.company_id = %s
+''', (session['userid'],))
+
         astronauts = cursor.fetchall()
         return render_template("assign_trainings.html", trainings=trainings, astronauts=astronauts)
     else:
