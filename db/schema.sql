@@ -226,16 +226,6 @@ GROUP BY
     A.id;
 
 
-SET GLOBAL event_scheduler = ON;
-CREATE EVENT IF NOT EXISTS UpdateBidStatusEvent
-ON SCHEDULE EVERY 1 DAY
-STARTS (TIMESTAMP(CURRENT_DATE) + INTERVAL 1 DAY)
-DO
-  UPDATE Bid
-  SET status = 'DeadlinePassed'
-  WHERE bid_date < CURRENT_DATE AND status != 'DeadlinePassed' AND status != 'Rejected';
-
-
 DELIMITER //
 
 CREATE TRIGGER CheckPersonCompanyIdBeforeInsert
