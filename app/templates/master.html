@@ -21,6 +21,11 @@
           <a class="nav-link active" aria-current="page" href="/dashboard">Dashboard</a>
         </li>
         {% endif %}
+        {% if session.get('isAdmin')  %}
+          <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="/admin_page">Admin Page</a>
+        </li>
+        {% endif %}
         
         {% if session.get('accounttype') == 'company' %}
         <li class="nav-item">
