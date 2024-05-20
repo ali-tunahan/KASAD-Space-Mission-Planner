@@ -550,6 +550,28 @@ def assignTrainings():
             print("Error executing SQL query:", e)
 
         return redirect(url_for('assignTrainings'))  # Redirect to the same page after processing
+
+@app.route('/add_training', methods=['POST'])
+def add_training():
+    try:
+        # Extract form data
+        name = request.form['name']
+        code = request.form['code']
+        description = request.form['description']
+        duration = request.form['duration']
+
+        # Connect to the database
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        random_uuid = uuid.uuid4()
+        # Insert new training into the database
+        cursor.execute('INSERT INTO Training (training_id, name, code, description, duration) VALUES (%s, %s, %s, %s, %s)', (random_uuid, name, code, description, duration))
+        mysql.connection.commit()
+        flash('New training added successfully!', 'success')
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f'Failed to add training: {str(e)}', 'danger')
+
+    return redirect(url_for('assignTrainings'))
     
 @app.route("/bid_for_mission", methods=["GET", "POST"])
 def bidForMission():
