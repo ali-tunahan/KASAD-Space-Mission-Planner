@@ -743,29 +743,61 @@ def viewBids():
         if bid_id:
             if 'accept' in request.form:
                 try:
+                    # Start a transaction
+                    mysql.connection.begin()
+
+                    # Accept the selected bid
                     cursor.execute("UPDATE Bid SET status = 'Accepted' WHERE bid_id = %s", (bid_id,))
-                    cursor.execute("SELECT mission_id FROM Bid WHERE bid_id = %s", (bid_id,))
-                    mission_id = cursor.fetchone()
-                    cursor.execute("INSERT INTO Mission_Accepted_Bid (mission_id, bid_id) VALUES (%s, %s)", (mission_id['mission_id'],bid_id,))
+                    cursor.execute("SELECT mission_id, amount, bidder_id FROM Bid WHERE bid_id = %s", (bid_id,))
+                    bid_info = cursor.fetchone()
+                    mission_id = bid_info['mission_id']
+                    amount = bid_info['amount']
+                    bidder_id = bid_info['bidder_id']
+
+                # Reject all other bids for this mission
+                    cursor.execute("""
+                    UPDATE Bid 
+                    SET status = 'Rejected'
+                    WHERE mission_id = %s AND bid_id <> %s
+                """, (mission_id, bid_id,))
+                    
+                    cursor.execute("SELECT * FROM Mission WHERE mission_id = %s", (mission_id,))
+                    mission_details = cursor.fetchone()
+                    employer_id = mission_details['employer_id']
+
+                # Link the accepted bid to the mission
+                    cursor.execute("""
+                    INSERT INTO Mission_Accepted_Bid (mission_id, bid_id)
+                    VALUES (%s, %s)
+                """, (mission_id, bid_id,))
+                    mysql.connection.commit()
+                # (transaction_id, bidder_id, employer_id, date, amount, status)
+                # Record a transaction for the accepted bid
+                    transaction_id = uuid.uuid4().hex
+                    cursor.execute("""
+                    INSERT INTO Transaction (transaction_id, bidder_id, employer_id, date, amount, status)
+                    VALUES (%s, %s, %s, CURDATE(), %s, 'Open')
+                    """, (transaction_id, bidder_id, employer_id, amount))
+                # Commit the transaction to the database
                     mysql.connection.commit()
                     flash('Bid accepted successfully!', 'success')
-                    #TODO: Accept only one bid
-                except Exception as e:
-                    flash(f'Error accepting bid: {str(e)}', 'error')
-            elif 'reject' in request.form:
-                try:
-                    cursor.execute("UPDATE Bid SET status = 'Rejected' WHERE bid_id = %s", (bid_id,))
-                    cursor.execute("SELECT mission_id FROM Bid WHERE bid_id = %s", (bid_id,))
-                    mission_id = cursor.fetchone()
-                    #TODO WE DO NOT ADD THIS TO ANY TABLE
 
-                    mysql.connection.commit()
-                    flash('Bid rejected successfully!', 'success')
-                    #TODO: Accept only one bid
                 except Exception as e:
+                # Roll back in case of any error
+                    mysql.connection.rollback()
                     flash(f'Error accepting bid: {str(e)}', 'error')
+
+        elif 'reject' in request.form:
+            try:
+                # Reject the selected bid
+                cursor.execute("UPDATE Bid SET status = 'Rejected' WHERE bid_id = %s", (bid_id,))
+                mysql.connection.commit()
+                flash('Bid rejected successfully!', 'success')
+            except Exception as e:
+                flash(f'Error rejecting bid: {str(e)}', 'error')
+
         return redirect(url_for('viewBids'))
-    
+
     current_company_id = get_user_id()
     cursor.execute('''
         SELECT Bid.bid_id, Bid.amount, Bid.bid_date, Bid.status, Mission.title AS mission_title, Company.name AS company_name, employer_id
