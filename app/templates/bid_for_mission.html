@@ -1,19 +1,23 @@
-{% extends "master.html" %}
-{% block title %}Bid for a Mission{% endblock %}
-
-{% block content %}
-{% with messages = get_flashed_messages(with_categories=true) %}
-{% if messages %}
-<ul class=flashes>
-    {% for category, message in messages %}
-    <div class="alert alert-{{category}} alert-dismissible fade show" role="alert">
-        <strong>{{message}}</strong>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-    {% endfor %}
+{% extends "master.html" %} {% block title %}Bid for a Mission{% endblock %} {%
+block content %} {% with messages = get_flashed_messages(with_categories=true)
+%} {% if messages %}
+<ul class="flashes">
+  {% for category, message in messages %}
+  <div
+    class="alert alert-{{category}} alert-dismissible fade show"
+    role="alert"
+  >
+    <strong>{{message}}</strong>
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="alert"
+      aria-label="Close"
+    ></button>
+  </div>
+  {% endfor %}
 </ul>
-{% endif %}
-{% endwith %}
+{% endif %} {% endwith %}
 <style>
   .mission-item {
     background-color: #33333f; /* Dark background for contrast */
@@ -38,7 +42,8 @@
     background-color: #33333f; /* Matching the mission item background */
     color: white;
   }
-  .modal-header, .modal-footer {
+  .modal-header,
+  .modal-footer {
     border-bottom: 1px solid #444;
     border-top: 1px solid #444;
   }
@@ -68,7 +73,7 @@
       value="{{ request.args.get('launch_date', '') }}"
     />
 
-    <label for="duration">Duration (months):</label>
+    <label for="duration">Max Duration (months):</label>
     <input
       type="number"
       id="duration"
@@ -78,7 +83,7 @@
       value="{{ request.args.get('duration', '') }}"
     />
 
-    <label for="volume">Payload Volume (cubic meters):</label>
+    <label for="volume">Max Payload Volume (cubic meters):</label>
     <input
       type="number"
       id="volume"
@@ -88,7 +93,7 @@
       value="{{ request.args.get('volume', '') }}"
     />
 
-    <label for="weight">Payload Weight (kg):</label>
+    <label for="weight">Max Payload Weight (kg):</label>
     <input
       type="number"
       id="weight"
@@ -106,7 +111,6 @@
     <div class="button-row">
       <h5>{{ mission.title }}</h5>
       <div class="buttons-right">
-
         <button
           type="button"
           class="btn btn-info button-spacing"
@@ -121,13 +125,11 @@
           data-bs-toggle="modal"
           data-bs-target="#bidModal{{ mission.mission_id }}"
         >
-
           BID
         </button>
       </div>
     </div>
     <p><strong>Description:</strong> {{ mission.description }}</p>
-
 
     <!-- Modal -->
     <div
@@ -140,57 +142,132 @@
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="modalLabel{{ mission.mission_id }}">{{ mission.title }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <h5 class="modal-title" id="modalLabel{{ mission.mission_id }}">
+              {{ mission.title }}
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
           </div>
           <div class="modal-body">
             <p><strong>Launch Date:</strong> {{ mission.launch_date }}</p>
-            <p><strong>Payload Volume:</strong> {{ mission.payload_volume }} cubic meters</p>
-            <p><strong>Payload Weight:</strong> {{ mission.payload_weight }} kg</p>
+            <p>
+              <strong>Payload Volume:</strong> {{ mission.payload_volume }}
+              cubic meters
+            </p>
+            <p>
+              <strong>Payload Weight:</strong> {{ mission.payload_weight }} kg
+            </p>
             <p><strong>Duration:</strong> {{ mission.duration }} months</p>
-            <p><strong>Required Astronauts:</strong> {{ mission.num_of_astronauts }}</p> 
-            <p><strong>Required Trainings:</strong> {{ mission.training_names or 'None' }}</p>
+            <p>
+              <strong>Required Astronauts:</strong> {{ mission.num_of_astronauts
+              }}
+            </p>
+            <p>
+              <strong>Required Trainings:</strong> {{ mission.training_names or
+              'None' }}
+            </p>
             <p><strong>Company:</strong> {{ mission.name or 'None' }}</p>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
           </div>
         </div>
       </div>
     </div>
-  
+
     <!-- Bid Modal -->
-    <div class="modal fade" id="bidModal{{ mission.mission_id }}" tabindex="-1" aria-labelledby="bidModalLabel{{ mission.mission_id }}" aria-hidden="true">
+    <div
+      class="modal fade"
+      id="bidModal{{ mission.mission_id }}"
+      tabindex="-1"
+      aria-labelledby="bidModalLabel{{ mission.mission_id }}"
+      aria-hidden="true"
+    >
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="bidModalLabel{{ mission.mission_id }}">
               Submit a Bid for {{ mission.title }}
             </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
           </div>
           <div class="modal-body">
-            <form method="POST" action="{{ url_for('bidForMission') }}" class="bid-form">
-              <input type="hidden" name="mission_id" value="{{ mission.mission_id }}">
+            <form
+              method="POST"
+              action="{{ url_for('bidForMission') }}"
+              class="bid-form"
+            >
+              <input
+                type="hidden"
+                name="mission_id"
+                value="{{ mission.mission_id }}"
+              />
               <div class="mb-3">
-                <label for="bidAmount{{ mission.mission_id }}" class="form-label">Bid Amount ($)</label>
-                <input type="number" class="form-control" id="bidAmount{{ mission.mission_id }}" name="bid_amount" min="1" required>
+                <label
+                  for="bidAmount{{ mission.mission_id }}"
+                  class="form-label"
+                  >Bid Amount ($)</label
+                >
+                <input
+                  type="number"
+                  class="form-control"
+                  id="bidAmount{{ mission.mission_id }}"
+                  name="bid_amount"
+                  min="1"
+                  required
+                />
               </div>
               <div class="mb-3">
                 <label class="form-label">Select Astronauts</label>
                 {% for astronaut in astronauts %}
                 <div class="form-check">
-                  <input class="form-check-input astronaut-checkbox" type="checkbox" value="{{ astronaut.id }}" id="astronaut{{ mission.mission_id }}{{ loop.index }}" name="astronaut_ids" data-mission-id="{{ mission.mission_id }}">
-                  <label class="form-check-label" for="astronaut{{ mission.mission_id }}{{ loop.index }}">
-                    {{ astronaut.rank }} {{ astronaut.first_name }} {{ astronaut.last_name }}
+                  <input
+                    class="form-check-input astronaut-checkbox"
+                    type="checkbox"
+                    value="{{ astronaut.id }}"
+                    id="astronaut{{ mission.mission_id }}{{ loop.index }}"
+                    name="astronaut_ids"
+                    data-mission-id="{{ mission.mission_id }}"
+                  />
+                  <label
+                    class="form-check-label"
+                    for="astronaut{{ mission.mission_id }}{{ loop.index }}"
+                  >
+                    {{ astronaut.rank }} {{ astronaut.first_name }} {{
+                    astronaut.last_name }}
                   </label>
                 </div>
                 {% endfor %}
-                <small id="selectionMessage{{ mission.mission_id }}">Select {{ mission.num_of_astronauts }} astronauts.</small>
+                <small id="selectionMessage{{ mission.mission_id }}"
+                  >Select {{ mission.num_of_astronauts }} astronauts.</small
+                >
               </div>
               <div class="modal-footer">
-                <button type="submit" class="btn btn-primary">Submit Bid</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary">
+                  Submit Bid
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                >
+                  Close
+                </button>
               </div>
             </form>
           </div>
