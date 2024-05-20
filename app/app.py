@@ -829,11 +829,32 @@ def admin():
             if 'expensive_mission' in request.form:
                 cursor.execute("""
                     INSERT INTO SystemReport (report_id, id, title, content) 
-                    SELECT UUID(), %s, 'Most Expensive Missions', CONCAT('Mission ID: ', mission_id, ', Payload Weight: ', payload_weight, ', Title: ', title) 
-                    FROM Mission 
-                    ORDER BY payload_weight DESC 
-                    LIMIT 1;
+                    SELECT UUID(), %s, 'Mission Cost Extremes', 
+                        CONCAT(
+                            'Most Expensive Mission - Mission ID: ', MaxMission.mission_id, ', Title: ', MaxMission.title, ', Highest Bid Amount: $', MaxMission.max_amount, 
+                            ' | Least Expensive Mission - Mission ID: ', MinMission.mission_id, ', Title: ', MinMission.title, ', Lowest Bid Amount: $', MinMission.min_amount
+                        )
+                    FROM
+                        (SELECT M.mission_id, M.title, MAX(B.amount) AS max_amount
+                        FROM Mission M
+                        JOIN Mission_Accepted_Bid MAB ON M.mission_id = MAB.mission_id
+                        JOIN Bid B ON MAB.bid_id = B.bid_id
+                        WHERE B.status = 'Accepted'
+                        GROUP BY M.mission_id, M.title
+                        ORDER BY MAX(B.amount) DESC
+                        LIMIT 1) AS MaxMission,
+                        (SELECT M.mission_id, M.title, MIN(B.amount) AS min_amount
+                        FROM Mission M
+                        JOIN Mission_Accepted_Bid MAB ON M.mission_id = MAB.mission_id
+                        JOIN Bid B ON MAB.bid_id = B.bid_id
+                        WHERE B.status = 'Accepted'
+                        GROUP BY M.mission_id, M.title
+                        ORDER BY MIN(B.amount) ASC
+                        LIMIT 1) AS MinMission;
                 """, (admin_id,))
+
+
+
             elif 'mission_status' in request.form:
                 cursor.execute("""
                     INSERT INTO SystemReport (report_id, id, title, content)
