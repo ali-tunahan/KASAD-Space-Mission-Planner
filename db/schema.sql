@@ -332,9 +332,9 @@ INSERT INTO Bidder (id, specialization) VALUES
 ('66666666-6666-6666-6666-666666666666', 'Spacecraft Design');
 
 INSERT INTO Bid (bid_id, mission_id, bidder_id, amount, bid_date, status) VALUES
-('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1','d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4' ,'44444444-4444-4444-4444-444444444444', 500000.00, '2023-04-01', 'Accepted'),
-('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2','d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4' ,'55555555-5555-5555-5555-555555555555', 750000.00, '2023-04-01', 'Accepted'),
-('c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3','e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5' ,'66666666-6666-6666-6666-666666666666', 600000.00, '2023-04-01', 'Accepted');
+('a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1','d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4' ,'44444444-4444-4444-4444-444444444444', 500000.00, '2023-04-01', 'Open'),
+('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2','d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4' ,'55555555-5555-5555-5555-555555555555', 750000.00, '2023-04-01', 'Open'),
+('c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3','e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5' ,'66666666-6666-6666-6666-666666666666', 600000.00, '2023-04-01', 'Open');
 
 INSERT INTO Employer (id, industry) VALUES
 ('44444444-4444-4444-4444-444444444444', 'Aerospace'),
@@ -342,14 +342,14 @@ INSERT INTO Employer (id, industry) VALUES
 ('66666666-6666-6666-6666-666666666666', 'Technology');
 
 INSERT INTO Mission (mission_id, employer_id, title, description, objectives, launch_date, duration, num_of_astronauts, payload_volume, payload_weight) VALUES
-('d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4', '44444444-4444-4444-4444-444444444444', 'Mars Colony', 'Establish a self-sustaining colony on Mars.', 'Colonization', '2025-12-25', 540, 6, 5000, 20000),
-('e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5', '55555555-5555-5555-5555-555555555555', 'Lunar Research', 'Conduct advanced research on the moon.', 'Research', '2024-07-20', 90, 4, 2000, 10000),
+('d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4', '44444444-4444-4444-4444-444444444444', 'Mars Colony', 'Establish a self-sustaining colony on Mars.', 'Colonization', '2025-12-25', 540, 1, 5000, 20000),
+('e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5', '55555555-5555-5555-5555-555555555555', 'Lunar Research', 'Conduct advanced research on the moon.', 'Research', '2024-07-20', 90, 2, 2000, 10000),
 ('f6f6f6f6-f6f6-f6f6-f6f6-f6f6f6f6f6f6', '66666666-6666-6666-6666-666666666666', 'Asteroid Mining', 'Mine valuable resources from NEA.', 'Mining', '2024-11-05', 120, 5, 3000, 15000);
 
-INSERT INTO Transaction (transaction_id, bidder_id, employer_id, date, amount, status) VALUES
-('g7g7g7g7-g7g7-g7g7-g7g7-g7g7g7g7g7g7', '44444444-4444-4444-4444-444444444444', '55555555-5555-5555-5555-555555555555', '2023-05-01', 200000.00, 'FINISHED'),
-('h8h8h8h8-h8h8-h8h8-h8h8-h8h8h8h8h8h8', '55555555-5555-5555-5555-555555555555', '66666666-6666-6666-6666-666666666666', '2023-06-01', 300000.00, 'FINISHED'),
-('i9i9i9i9-i9i9-i9i9-i9i9-i9i9i9i9i9i9', '66666666-6666-6666-6666-666666666666', '44444444-4444-4444-4444-444444444444', '2023-07-01', 250000.00, 'FINISHED');
+-- INSERT INTO Transaction (transaction_id, bidder_id, employer_id, date, amount, status) VALUES
+-- ('g7g7g7g7-g7g7-g7g7-g7g7-g7g7g7g7g7g7', '44444444-4444-4444-4444-444444444444', '55555555-5555-5555-5555-555555555555', '2023-05-01', 200000.00, 'FINISHED'),
+-- ('h8h8h8h8-h8h8-h8h8-h8h8-h8h8h8h8h8h8', '55555555-5555-5555-5555-555555555555', '66666666-6666-6666-6666-666666666666', '2023-06-01', 300000.00, 'FINISHED'),
+-- ('i9i9i9i9-i9i9-i9i9-i9i9-i9i9i9i9i9i9', '66666666-6666-6666-6666-666666666666', '44444444-4444-4444-4444-444444444444', '2023-07-01', 250000.00, 'FINISHED');
 
 INSERT INTO SystemReport (report_id, id, title, content) VALUES
 ('j0j0j0j0-j0j0-j0j0-j0j0-j0j0j0j0j0j0', '11111111-1111-1111-1111-111111111111', 'Server Maintenance', 'Routine server maintenance completed without issues.'),
@@ -367,10 +367,10 @@ INSERT INTO Bid_Has_Astronaut (bid_id, id) VALUES
 ('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2', '88888888-8888-8888-8888-888888888888'),
 ('c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3', '99999999-9999-9999-9999-999999999999');
 
-INSERT INTO Mission_Accepted_Bid (mission_id, bid_id) VALUES
-('d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4', 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1'),
-('e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5', 'b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2'),
-('f6f6f6f6-f6f6-f6f6-f6f6-f6f6f6f6f6f6', 'c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3');
+-- INSERT INTO Mission_Accepted_Bid (mission_id, bid_id) VALUES
+-- ('d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4', 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1'),
+-- ('e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5', 'b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2'),
+-- ('f6f6f6f6-f6f6-f6f6-f6f6-f6f6f6f6f6f6', 'c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3');
 
 INSERT INTO Mission_Requires_Training (mission_id, training_id) VALUES
 ('d4d4d4d4-d4d4-d4d4-d4d4-d4d4d4d4d4d4', 'm3m3m3m3-m3m3-m3m3-m3m3-m3m3m3m3m3m3'),

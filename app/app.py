@@ -120,7 +120,7 @@ def main():
         company = cursor.fetchone()
         cursor.execute("SELECT * FROM Mission_Accepted_Bid MA,Mission M,Bid B WHERE M.mission_id = MA.mission_id AND B.mission_id = MA.mission_id AND B.bidder_id = %s", (session['userid'],))
         missions = cursor.fetchall()
-        cursor.execute("SELECT * FROM Mission_Accepted_Bid MA, Mission M, Bid B,Company C WHERE M.mission_id = MA.mission_id AND M.employer_id = %s AND B.mission_id=M.mission_id AND C.id = B.bidder_id", (session['userid'],))
+        cursor.execute("SELECT * FROM Mission_Accepted_Bid MA, Mission M, Bid B,Company C WHERE M.mission_id = MA.mission_id AND M.employer_id = %s AND B.mission_id=M.mission_id AND C.id = B.bidder_id AND B.status = 'Accepted'", (session['userid'],))
         bids = cursor.fetchall()
         return render_template("main.html", person = person, company=company, astronaut = astronaut, missions=missions,bids=bids)
     elif(type == 'astronaut'):
